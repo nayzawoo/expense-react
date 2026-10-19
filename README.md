@@ -46,10 +46,16 @@ Do not commit `.env` or real secrets. `.env.example` is the committed template.
 | `npm run lint` | Run oxlint |
 | `npm test` | Run the Vitest suite once |
 | `npm run test:watch` | Run Vitest in watch mode |
+| `npm run test:e2e` | Run Playwright smoke e2e (build + preview locally) |
+| `npm run test:e2e:ui` | Open the Playwright UI runner |
 
-Tests use Vitest + Testing Library with mocked network calls. They cover API
+Unit tests use Vitest + Testing Library with mocked network calls. They cover API
 client helpers, auth route gates, accounts list rendering, and the home
 dashboard summary.
+
+Smoke e2e uses Playwright against the Vite preview server (Chromium). Specs live
+under `e2e/` and assert the app boots and the login page renders — no credentials
+or live API required. First local run may need `npx playwright install chromium`.
 
 ## App routes
 
