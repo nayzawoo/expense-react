@@ -1,0 +1,54 @@
+{
+  "app": {
+    "name": "Expense",
+    "tagline": "Household spending, clearly tracked"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "expenses": "Expenses",
+    "accounts": "Accounts",
+    "settings": "Settings",
+    "login": "Sign in",
+    "menu": "Menu",
+    "closeMenu": "Close menu"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "my": "မြန်မာ"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "A quick view of balances and recent activity.",
+    "placeholder": "Connect an API to load live balances and recent transactions.",
+    "quickAdd": "Add expense"
+  },
+  "expenses": {
+    "title": "Expenses",
+    "subtitle": "Review and record household expenses.",
+    "empty": "No expenses yet. This list will fill in once the API is wired.",
+    "add": "Add expense"
+  },
+  "accounts": {
+    "title": "Accounts",
+    "subtitle": "Cash, cards, and other household balances.",
+    "empty": "No accounts yet. Account management will land in a later slice."
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Preferences for this device.",
+    "languageHint": "Choose the interface language. Your choice is remembered on this device."
+  },
+  "login": {
+    "title": "Sign in",
+    "subtitle": "Authentication will connect to the expense API in a later slice.",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "demoNote": "Scaffold only — sign-in is not wired yet."
+  },
+  "common": {
+    "comingSoon": "Coming soon",
+    "backHome": "Back to dashboard"
+  }
+}
