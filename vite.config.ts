@@ -36,6 +36,12 @@ export default defineConfig(({ mode }) => {
       css: false,
       restoreMocks: true,
       clearMocks: true,
+      exclude: [
+        '**/node_modules/**',
+        '**/dist/**',
+        '**/e2e/**',
+        '**/.{idea,git,cache,output,temp}/**',
+      ],
     },
   }
 })
