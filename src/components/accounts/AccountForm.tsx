@@ -1,16 +1,12 @@
 import { useState, type SubmitEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type {
-  Account,
-  AccountType,
-  CreateAccountInput,
-  UpdateAccountInput,
-} from '@/api/accounts'
+import type { AccountType, CreateAccountInput } from '@/api/accounts'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { householdToday } from '@/lib/household-date'
 import { cn } from '@/lib/utils'
 
 const selectClassName = cn(
@@ -26,60 +22,37 @@ function isSignedMoneyString(value: string): boolean {
   return /^-?(0|[1-9]\d*)$/.test(value.trim())
 }
 
-function todayIso(): string {
-  const now = new Date()
-  const y = now.getFullYear()
-  const m = String(now.getMonth() + 1).padStart(2, '0')
-  const d = String(now.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
-
 export type AccountFormValues = CreateAccountInput
 
 type AccountFormProps = {
-  mode: 'create' | 'edit'
-  account?: Account | null
   defaultSortOrder: number
   currency: string
+  /** IANA timezone from the household (e.g. Asia/Yangon). */
+  timeZone: string
   submitting: boolean
   error: string | null
-  onSubmit: (
-    values: AccountFormValues | UpdateAccountInput,
-  ) => Promise<void>
+  onSubmit: (values: AccountFormValues) => Promise<void>
   onCancel: () => void
 }
 
 function initialValues(
-  mode: 'create' | 'edit',
-  account: Account | null | undefined,
   defaultSortOrder: number,
+  timeZone: string,
 ): AccountFormValues {
-  if (mode === 'edit' && account) {
-    return {
-      name: account.name,
-      type: account.type,
-      ownerLabel: account.ownerLabel,
-      openedOn: account.openedOn,
-      openingAmount: account.openingAmount,
-      sortOrder: account.sortOrder,
-    }
-  }
-
   return {
     name: '',
     type: 'CASH',
     ownerLabel: '',
-    openedOn: todayIso(),
+    openedOn: householdToday(timeZone),
     openingAmount: '0',
     sortOrder: defaultSortOrder,
   }
 }
 
 export function AccountForm({
-  mode,
-  account,
   defaultSortOrder,
   currency,
+  timeZone,
   submitting,
   error,
   onSubmit,
@@ -87,7 +60,7 @@ export function AccountForm({
 }: AccountFormProps) {
   const { t } = useTranslation()
   const [values, setValues] = useState<AccountFormValues>(() =>
-    initialValues(mode, account, defaultSortOrder),
+    initialValues(defaultSortOrder, timeZone),
   )
   const [localError, setLocalError] = useState<string | null>(null)
 
@@ -122,25 +95,12 @@ export function AccountForm({
       setLocalError(t('accounts.form.sortInvalid'))
       return
     }
-
-    if (mode === 'create') {
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(values.openedOn)) {
-        setLocalError(t('accounts.form.openedOnInvalid'))
-        return
-      }
-      if (!isSignedMoneyString(values.openingAmount)) {
-        setLocalError(t('accounts.form.openingAmountInvalid'))
-        return
-      }
-
-      await onSubmit({
-        name,
-        type: values.type,
-        ownerLabel,
-        openedOn: values.openedOn,
-        openingAmount: values.openingAmount.trim(),
-        sortOrder: values.sortOrder,
-      })
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(values.openedOn)) {
+      setLocalError(t('accounts.form.openedOnInvalid'))
+      return
+    }
+    if (!isSignedMoneyString(values.openingAmount)) {
+      setLocalError(t('accounts.form.openingAmountInvalid'))
       return
     }
 
@@ -148,6 +108,8 @@ export function AccountForm({
       name,
       type: values.type,
       ownerLabel,
+      openedOn: values.openedOn,
+      openingAmount: values.openingAmount.trim(),
       sortOrder: values.sortOrder,
     })
   }
@@ -216,59 +178,44 @@ export function AccountForm({
         />
       </div>
 
-      {mode === 'create' ? (
-        <>
-          <div className="grid gap-2">
-            <Label htmlFor="account-opened-on">
-              {t('accounts.fields.openedOn')}
-            </Label>
-            <Input
-              id="account-opened-on"
-              type="date"
-              value={values.openedOn}
-              disabled={submitting}
-              onChange={(event) =>
-                setValues((current) => ({
-                  ...current,
-                  openedOn: event.target.value,
-                }))
-              }
-            />
-          </div>
+      <div className="grid gap-2">
+        <Label htmlFor="account-opened-on">
+          {t('accounts.fields.openedOn')}
+        </Label>
+        <Input
+          id="account-opened-on"
+          type="date"
+          value={values.openedOn}
+          disabled={submitting}
+          onChange={(event) =>
+            setValues((current) => ({
+              ...current,
+              openedOn: event.target.value,
+            }))
+          }
+        />
+      </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="account-opening-amount">
-              {t('accounts.fields.openingAmount', { currency })}
-            </Label>
-            <Input
-              id="account-opening-amount"
-              inputMode="numeric"
-              value={values.openingAmount}
-              disabled={submitting}
-              onChange={(event) =>
-                setValues((current) => ({
-                  ...current,
-                  openingAmount: event.target.value,
-                }))
-              }
-            />
-            <p className="text-xs text-muted-foreground">
-              {t('accounts.form.openingAmountHint')}
-            </p>
-          </div>
-        </>
-      ) : (
-        <div className="grid gap-1 text-sm text-muted-foreground">
-          <p>
-            {t('accounts.fields.openedOn')}: {values.openedOn}
-          </p>
-          <p>
-            {t('accounts.fields.openingAmount', { currency })}:{' '}
-            {values.openingAmount}
-          </p>
-          <p>{t('accounts.form.immutableHint')}</p>
-        </div>
-      )}
+      <div className="grid gap-2">
+        <Label htmlFor="account-opening-amount">
+          {t('accounts.fields.openingAmount', { currency })}
+        </Label>
+        <Input
+          id="account-opening-amount"
+          inputMode="numeric"
+          value={values.openingAmount}
+          disabled={submitting}
+          onChange={(event) =>
+            setValues((current) => ({
+              ...current,
+              openingAmount: event.target.value,
+            }))
+          }
+        />
+        <p className="text-xs text-muted-foreground">
+          {t('accounts.form.openingAmountHint')}
+        </p>
+      </div>
 
       <div className="grid gap-2">
         <Label htmlFor="account-sort">{t('accounts.fields.sortOrder')}</Label>
@@ -289,11 +236,7 @@ export function AccountForm({
 
       <div className="flex flex-wrap gap-2">
         <Button type="submit" disabled={submitting}>
-          {submitting
-            ? t('accounts.form.saving')
-            : mode === 'create'
-              ? t('accounts.form.create')
-              : t('accounts.form.save')}
+          {submitting ? t('accounts.form.saving') : t('accounts.form.create')}
         </Button>
         <Button
           type="button"

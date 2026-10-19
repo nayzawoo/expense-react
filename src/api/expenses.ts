@@ -1,4 +1,5 @@
 import { apiFetch } from '@/api/client'
+import { withIdempotencyKey } from '@/lib/idempotency'
 
 export type ExpenseRef = {
   id: string
@@ -51,10 +52,6 @@ export type VoidExpenseInput = {
   reason: string
 }
 
-function newIdempotencyKey(): string {
-  return crypto.randomUUID()
-}
-
 function versionMatch(version: number): string {
   return `"${version}"`
 }
@@ -76,14 +73,17 @@ export async function createExpense(
   householdId: string,
   input: CreateExpenseInput,
 ): Promise<Expense> {
-  return apiFetch<Expense>(`/api/v1/households/${householdId}/expenses`, {
-    method: 'POST',
-    csrf: true,
-    headers: {
-      'Idempotency-Key': newIdempotencyKey(),
-    },
-    body: input,
-  })
+  const scope = `POST /households/${householdId}/expenses`
+  return withIdempotencyKey(scope, input, (idempotencyKey) =>
+    apiFetch<Expense>(`/api/v1/households/${householdId}/expenses`, {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'Idempotency-Key': idempotencyKey,
+      },
+      body: input,
+    }),
+  )
 }
 
 export async function replaceExpense(
@@ -92,17 +92,20 @@ export async function replaceExpense(
   version: number,
   input: ReplaceExpenseInput,
 ): Promise<Expense> {
-  return apiFetch<Expense>(
-    `/api/v1/households/${householdId}/expenses/${expenseId}`,
-    {
-      method: 'PUT',
-      csrf: true,
-      headers: {
-        'Idempotency-Key': newIdempotencyKey(),
-        'If-Match': versionMatch(version),
+  const scope = `PUT /households/${householdId}/expenses/${expenseId}`
+  return withIdempotencyKey(scope, { version, ...input }, (idempotencyKey) =>
+    apiFetch<Expense>(
+      `/api/v1/households/${householdId}/expenses/${expenseId}`,
+      {
+        method: 'PUT',
+        csrf: true,
+        headers: {
+          'Idempotency-Key': idempotencyKey,
+          'If-Match': versionMatch(version),
+        },
+        body: input,
       },
-      body: input,
-    },
+    ),
   )
 }
 
@@ -112,16 +115,19 @@ export async function voidExpense(
   version: number,
   input: VoidExpenseInput,
 ): Promise<Expense> {
-  return apiFetch<Expense>(
-    `/api/v1/households/${householdId}/expenses/${expenseId}/void`,
-    {
-      method: 'POST',
-      csrf: true,
-      headers: {
-        'Idempotency-Key': newIdempotencyKey(),
-        'If-Match': versionMatch(version),
+  const scope = `POST /households/${householdId}/expenses/${expenseId}/void`
+  return withIdempotencyKey(scope, { version, ...input }, (idempotencyKey) =>
+    apiFetch<Expense>(
+      `/api/v1/households/${householdId}/expenses/${expenseId}/void`,
+      {
+        method: 'POST',
+        csrf: true,
+        headers: {
+          'Idempotency-Key': idempotencyKey,
+          'If-Match': versionMatch(version),
+        },
+        body: input,
       },
-      body: input,
-    },
+    ),
   )
 }

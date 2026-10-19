@@ -1,4 +1,5 @@
 import { apiFetch } from '@/api/client'
+import { withIdempotencyKey } from '@/lib/idempotency'
 
 export type TransferRef = {
   id: string
@@ -43,10 +44,6 @@ export type VoidTransferInput = {
   reason: string
 }
 
-function newIdempotencyKey(): string {
-  return crypto.randomUUID()
-}
-
 function versionMatch(version: number): string {
   return `"${version}"`
 }
@@ -68,14 +65,17 @@ export async function createTransfer(
   householdId: string,
   input: CreateTransferInput,
 ): Promise<Transfer> {
-  return apiFetch<Transfer>(`/api/v1/households/${householdId}/transfers`, {
-    method: 'POST',
-    csrf: true,
-    headers: {
-      'Idempotency-Key': newIdempotencyKey(),
-    },
-    body: input,
-  })
+  const scope = `POST /households/${householdId}/transfers`
+  return withIdempotencyKey(scope, input, (idempotencyKey) =>
+    apiFetch<Transfer>(`/api/v1/households/${householdId}/transfers`, {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'Idempotency-Key': idempotencyKey,
+      },
+      body: input,
+    }),
+  )
 }
 
 export async function voidTransfer(
@@ -84,16 +84,19 @@ export async function voidTransfer(
   version: number,
   input: VoidTransferInput,
 ): Promise<Transfer> {
-  return apiFetch<Transfer>(
-    `/api/v1/households/${householdId}/transfers/${transferId}/void`,
-    {
-      method: 'POST',
-      csrf: true,
-      headers: {
-        'Idempotency-Key': newIdempotencyKey(),
-        'If-Match': versionMatch(version),
+  const scope = `POST /households/${householdId}/transfers/${transferId}/void`
+  return withIdempotencyKey(scope, { version, ...input }, (idempotencyKey) =>
+    apiFetch<Transfer>(
+      `/api/v1/households/${householdId}/transfers/${transferId}/void`,
+      {
+        method: 'POST',
+        csrf: true,
+        headers: {
+          'Idempotency-Key': idempotencyKey,
+          'If-Match': versionMatch(version),
+        },
+        body: input,
       },
-      body: input,
-    },
+    ),
   )
 }

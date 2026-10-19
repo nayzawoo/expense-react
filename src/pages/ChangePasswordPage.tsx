@@ -2,6 +2,7 @@ import { useState, type SubmitEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { KeyRound } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
 import { isApiError } from '@/api/errors'
 import { useAuth } from '@/auth/useAuth'
@@ -114,7 +115,15 @@ export function ChangePasswordPage() {
               variant="outline"
               disabled={submitting}
               onClick={() => {
-                void logout().then(() => navigate('/login', { replace: true }))
+                void logout()
+                  .then(() => navigate('/login', { replace: true }))
+                  .catch((err: unknown) => {
+                    toast.error(
+                      err instanceof Error
+                        ? err.message
+                        : t('settings.logoutFailed'),
+                    )
+                  })
               }}
             >
               {t('nav.logout')}

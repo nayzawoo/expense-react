@@ -1,4 +1,5 @@
 import { apiFetch } from '@/api/client'
+import { withIdempotencyKey } from '@/lib/idempotency'
 import type { Account, AccountStatus, AccountType } from '@/api/types'
 
 export type { Account, AccountStatus, AccountType }
@@ -12,28 +13,12 @@ export type CreateAccountInput = {
   sortOrder: number
 }
 
-export type UpdateAccountInput = {
-  name: string
-  type: AccountType
-  ownerLabel: string
-  sortOrder: number
-}
-
-function newIdempotencyKey(): string {
-  return crypto.randomUUID()
-}
-
-export async function listAccounts(
-  householdId: string,
-  status: AccountStatus | 'ALL' | '' = 'ALL',
-): Promise<Account[]> {
-  const query =
-    status && status !== 'ALL'
-      ? `?status=${encodeURIComponent(status)}`
-      : ''
-  return apiFetch<Account[]>(
-    `/api/v1/households/${householdId}/accounts${query}`,
-  )
+/**
+ * Spring AccountController exposes list, detail, ledger, and create only.
+ * There is no PUT update or PATCH status route — do not call them from the client.
+ */
+export async function listAccounts(householdId: string): Promise<Account[]> {
+  return apiFetch<Account[]>(`/api/v1/households/${householdId}/accounts`)
 }
 
 export async function getAccount(
@@ -49,42 +34,15 @@ export async function createAccount(
   householdId: string,
   input: CreateAccountInput,
 ): Promise<Account> {
-  return apiFetch<Account>(`/api/v1/households/${householdId}/accounts`, {
-    method: 'POST',
-    csrf: true,
-    headers: {
-      'Idempotency-Key': newIdempotencyKey(),
-    },
-    body: input,
-  })
-}
-
-export async function updateAccount(
-  householdId: string,
-  accountId: string,
-  input: UpdateAccountInput,
-): Promise<Account> {
-  return apiFetch<Account>(
-    `/api/v1/households/${householdId}/accounts/${accountId}`,
-    {
-      method: 'PUT',
+  const scope = `POST /households/${householdId}/accounts`
+  return withIdempotencyKey(scope, input, (idempotencyKey) =>
+    apiFetch<Account>(`/api/v1/households/${householdId}/accounts`, {
+      method: 'POST',
       csrf: true,
+      headers: {
+        'Idempotency-Key': idempotencyKey,
+      },
       body: input,
-    },
-  )
-}
-
-export async function updateAccountStatus(
-  householdId: string,
-  accountId: string,
-  status: AccountStatus,
-): Promise<Account> {
-  return apiFetch<Account>(
-    `/api/v1/households/${householdId}/accounts/${accountId}/status`,
-    {
-      method: 'PATCH',
-      csrf: true,
-      body: { status },
-    },
+    }),
   )
 }

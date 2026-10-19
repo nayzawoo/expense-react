@@ -449,6 +449,7 @@ export function TransfersPage() {
               transfer={selected}
               accounts={accounts}
               currency={currency}
+              timeZone={household?.timezone ?? 'UTC'}
               submitting={submitting}
               error={formError}
               onSubmit={handleSubmit}

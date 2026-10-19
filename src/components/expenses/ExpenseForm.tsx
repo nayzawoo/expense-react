@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { isPositiveMoneyString } from '@/lib/expense-errors'
+import { householdToday } from '@/lib/household-date'
 import { cn } from '@/lib/utils'
 
 const selectClassName = cn(
@@ -35,19 +36,13 @@ type ExpenseFormProps = {
   categories: Category[]
   beneficiaries: Beneficiary[]
   currency: string
+  /** IANA timezone from the household. */
+  timeZone: string
   submitting: boolean
   error: string | null
   onSubmit: (values: ExpenseFormValues) => Promise<void>
   onCancel: () => void
   onVoid?: (reason: string) => Promise<void>
-}
-
-function todayIso(): string {
-  const now = new Date()
-  const y = now.getFullYear()
-  const m = String(now.getMonth() + 1).padStart(2, '0')
-  const d = String(now.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
 }
 
 function initialValues(
@@ -56,6 +51,7 @@ function initialValues(
   accounts: Account[],
   categories: Category[],
   beneficiaries: Beneficiary[],
+  timeZone: string,
 ): ExpenseFormValues {
   if (mode === 'edit' && expense) {
     return {
@@ -70,7 +66,7 @@ function initialValues(
   }
 
   return {
-    effectiveDate: todayIso(),
+    effectiveDate: householdToday(timeZone),
     amount: '',
     accountId: accounts[0]?.id ?? '',
     categoryId: categories[0]?.id ?? '',
@@ -87,6 +83,7 @@ export function ExpenseForm({
   categories,
   beneficiaries,
   currency,
+  timeZone,
   submitting,
   error,
   onSubmit,
@@ -95,7 +92,7 @@ export function ExpenseForm({
 }: ExpenseFormProps) {
   const { t } = useTranslation()
   const [values, setValues] = useState<ExpenseFormValues>(() =>
-    initialValues(mode, expense, accounts, categories, beneficiaries),
+    initialValues(mode, expense, accounts, categories, beneficiaries, timeZone),
   )
   const [localError, setLocalError] = useState<string | null>(null)
   const [voidReason, setVoidReason] = useState('')

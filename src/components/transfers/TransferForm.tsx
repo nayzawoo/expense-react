@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { isPositiveMoneyString } from '@/lib/expense-errors'
+import { householdToday } from '@/lib/household-date'
 import { formatMoney } from '@/lib/money'
 import { cn } from '@/lib/utils'
 
@@ -31,6 +32,8 @@ type TransferFormProps = {
   transfer?: Transfer | null
   accounts: Account[]
   currency: string
+  /** IANA timezone from the household. */
+  timeZone: string
   submitting: boolean
   error: string | null
   onSubmit: (values: TransferFormValues) => Promise<void>
@@ -38,22 +41,15 @@ type TransferFormProps = {
   onVoid?: (reason: string) => Promise<void>
 }
 
-function todayIso(): string {
-  const now = new Date()
-  const y = now.getFullYear()
-  const m = String(now.getMonth() + 1).padStart(2, '0')
-  const d = String(now.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
-
 function initialValues(
   accounts: Account[],
+  timeZone: string,
 ): TransferFormValues {
   const source = accounts[0]?.id ?? ''
   const destination =
     accounts.find((account) => account.id !== source)?.id ?? source
   return {
-    effectiveDate: todayIso(),
+    effectiveDate: householdToday(timeZone),
     amount: '',
     sourceAccountId: source,
     destinationAccountId: destination,
@@ -66,6 +62,7 @@ export function TransferForm({
   transfer,
   accounts,
   currency,
+  timeZone,
   submitting,
   error,
   onSubmit,
@@ -74,7 +71,7 @@ export function TransferForm({
 }: TransferFormProps) {
   const { t } = useTranslation()
   const [values, setValues] = useState<TransferFormValues>(() =>
-    initialValues(accounts),
+    initialValues(accounts, timeZone),
   )
   const [localError, setLocalError] = useState<string | null>(null)
   const [voidReason, setVoidReason] = useState('')
