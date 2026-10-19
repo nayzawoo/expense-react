@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type SubmitEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type {
@@ -71,7 +71,7 @@ export function BeneficiaryForm({
     setValues((prev) => ({ ...prev, [key]: value }))
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     setLocalError(null)
 
