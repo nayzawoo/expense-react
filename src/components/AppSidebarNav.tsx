@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import {
+  BarChart3,
   LayoutDashboard,
   Receipt,
   Settings,
@@ -23,6 +24,7 @@ const navItems = [
     icon: Users,
     labelKey: 'nav.beneficiaries',
   },
+  { to: '/reports', end: false, icon: BarChart3, labelKey: 'nav.reports' },
   { to: '/settings', end: false, icon: Settings, labelKey: 'nav.settings' },
 ] as const
 
