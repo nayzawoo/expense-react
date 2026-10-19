@@ -5,6 +5,7 @@ import {
   Settings,
   Tags,
   Users,
+  UsersRound,
   Wallet,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -22,6 +23,12 @@ const navItems = [
     end: false,
     icon: Users,
     labelKey: 'nav.beneficiaries',
+  },
+  {
+    to: '/members',
+    end: false,
+    icon: UsersRound,
+    labelKey: 'nav.members',
   },
   { to: '/settings', end: false, icon: Settings, labelKey: 'nav.settings' },
 ] as const

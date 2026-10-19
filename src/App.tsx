@@ -11,6 +11,7 @@ import { ChangePasswordPage } from '@/pages/ChangePasswordPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { ExpensesPage } from '@/pages/ExpensesPage'
 import { LoginPage } from '@/pages/LoginPage'
+import { MembersPage } from '@/pages/MembersPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { ThemeProvider } from '@/theme/ThemeProvider'
 
@@ -31,6 +32,7 @@ export default function App() {
                 <Route path="accounts" element={<AccountsPage />} />
                 <Route path="categories" element={<CategoriesPage />} />
                 <Route path="beneficiaries" element={<BeneficiariesPage />} />
+                <Route path="members" element={<MembersPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="change-password" element={<ChangePasswordPage />} />
               </Route>
