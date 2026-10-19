@@ -1,3 +1,4 @@
+import type { Category } from '@/api/categories'
 import type { Account, CurrentUser, Household } from '@/api/types'
 
 export const sampleUser: CurrentUser = {
@@ -5,6 +6,14 @@ export const sampleUser: CurrentUser = {
   email: 'member@example.com',
   displayName: 'Sample Member',
   role: 'MEMBER',
+  mustChangePassword: false,
+}
+
+export const sampleAdmin: CurrentUser = {
+  id: '22222222-2222-4222-8222-222222222222',
+  email: 'admin@example.com',
+  displayName: 'Sample Admin',
+  role: 'ADMIN',
   mustChangePassword: false,
 }
 
@@ -56,5 +65,26 @@ export const sampleAccounts: Account[] = [
     sortOrder: 2,
     version: 0,
     currency: 'MMK',
+  },
+]
+
+export const sampleCategories: Category[] = [
+  {
+    id: '66666666-6666-4666-8666-666666666666',
+    name: 'Food',
+    color: '#AABBCC',
+    iconKey: 'food',
+    sortOrder: 1,
+    status: 'ACTIVE',
+    version: 0,
+  },
+  {
+    id: '77777777-7777-4777-8777-777777777777',
+    name: 'Transport',
+    color: '#112233',
+    iconKey: 'transport',
+    sortOrder: 2,
+    status: 'ARCHIVED',
+    version: 1,
   },
 ]

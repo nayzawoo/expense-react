@@ -7,6 +7,7 @@
     "dashboard": "Dashboard",
     "expenses": "Expenses",
     "accounts": "Accounts",
+    "categories": "Categories",
     "settings": "Settings",
     "login": "Sign in",
     "logout": "Sign out",
@@ -115,6 +116,66 @@
     "statuses": {
       "ACTIVE": "Active",
       "ARCHIVED": "Archived"
+    }
+  },
+  "categories": {
+    "title": "Categories",
+    "subtitle": "Labels for expense classification in this household.",
+    "empty": "No categories yet.",
+    "add": "Add category",
+    "edit": "Edit",
+    "archive": "Archive",
+    "reactivate": "Reactivate",
+    "loadError": "Could not load categories.",
+    "filterStatus": "Status",
+    "fields": {
+      "name": "Name",
+      "icon": "Icon",
+      "color": "Color",
+      "colorHex": "Color hex",
+      "sortOrder": "Sort order",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "statuses": {
+      "ACTIVE": "Active",
+      "ARCHIVED": "Archived"
+    },
+    "icons": {
+      "food": "Food",
+      "transport": "Transport",
+      "home": "Home",
+      "health": "Health",
+      "shopping": "Shopping",
+      "bills": "Bills",
+      "education": "Education",
+      "entertainment": "Entertainment",
+      "other": "Other"
+    },
+    "form": {
+      "createTitle": "Add category",
+      "editTitle": "Edit category",
+      "createHint": "Admins create expense labels with a color and icon key.",
+      "editHint": "Update the category metadata. Name must stay unique in the household.",
+      "create": "Save category",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "nameRequired": "Enter a category name.",
+      "nameTooLong": "Name must be 120 characters or fewer.",
+      "colorInvalid": "Color must be a hex value like #AABBCC.",
+      "iconInvalid": "Choose a supported icon key.",
+      "sortInvalid": "Sort order must be a whole number.",
+      "errorTitle": "Could not save"
+    },
+    "errors": {
+      "generic": "Something went wrong with this category.",
+      "invalid": "Check the form values and try again.",
+      "duplicate": "A category with that name already exists.",
+      "forbidden": "You do not have permission for this action.",
+      "notFound": "That category was not found."
     }
   },
   "settings": {

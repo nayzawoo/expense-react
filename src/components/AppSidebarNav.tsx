@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Receipt,
   Settings,
+  Tags,
   Wallet,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -14,6 +15,7 @@ const navItems = [
   { to: '/', end: true, icon: LayoutDashboard, labelKey: 'nav.dashboard' },
   { to: '/expenses', end: false, icon: Receipt, labelKey: 'nav.expenses' },
   { to: '/accounts', end: false, icon: Wallet, labelKey: 'nav.accounts' },
+  { to: '/categories', end: false, icon: Tags, labelKey: 'nav.categories' },
   { to: '/settings', end: false, icon: Settings, labelKey: 'nav.settings' },
 ] as const
 
