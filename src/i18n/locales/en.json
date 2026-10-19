@@ -7,6 +7,7 @@
     "dashboard": "Dashboard",
     "expenses": "Expenses",
     "accounts": "Accounts",
+    "beneficiaries": "Beneficiaries",
     "settings": "Settings",
     "login": "Sign in",
     "logout": "Sign out",
@@ -115,6 +116,59 @@
     "statuses": {
       "ACTIVE": "Active",
       "ARCHIVED": "Archived"
+    }
+  },
+  "beneficiaries": {
+    "title": "Beneficiaries",
+    "subtitle": "People and groups linked to household spending.",
+    "empty": "No beneficiaries yet.",
+    "add": "Add beneficiary",
+    "edit": "Edit",
+    "archive": "Archive",
+    "restore": "Restore",
+    "loadError": "Could not load beneficiaries.",
+    "fields": {
+      "name": "Name",
+      "kind": "Kind",
+      "sortOrder": "Sort order",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "filters": {
+      "allStatuses": "All statuses",
+      "none": "No beneficiaries match this status filter."
+    },
+    "form": {
+      "createTitle": "Add beneficiary",
+      "editTitle": "Edit beneficiary",
+      "createHint": "Creates a household beneficiary. Admin only.",
+      "editHint": "Updates name, kind, or sort order. Admin only.",
+      "create": "Save beneficiary",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "updatingStatus": "Updating…",
+      "namePlaceholder": "e.g. Household",
+      "nameRequired": "Enter a name.",
+      "nameTooLong": "Name must be 120 characters or fewer.",
+      "kindRequired": "Choose a kind.",
+      "sortOrderInvalid": "Sort order must be a whole number.",
+      "errorTitle": "Could not save"
+    },
+    "kinds": {
+      "PERSON": "Person",
+      "HOUSEHOLD": "Household",
+      "OTHER": "Other"
+    },
+    "statuses": {
+      "ACTIVE": "Active",
+      "ARCHIVED": "Archived"
+    },
+    "errors": {
+      "generic": "Something went wrong with this beneficiary.",
+      "invalid": "Check the form values and try again.",
+      "conflict": "A beneficiary with that name already exists.",
+      "forbidden": "You do not have permission for this action.",
+      "notFound": "That beneficiary was not found."
     }
   },
   "settings": {
