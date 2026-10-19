@@ -1,15 +1,29 @@
-import { useCallback, useEffect, useState } from 'react'
-import { Wallet } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Archive, Pencil, PlusCircle, Wallet } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
-import { listAccounts } from '@/api/accounts'
+import {
+  createAccount,
+  listAccounts,
+  updateAccount,
+  updateAccountStatus,
+  type Account,
+  type AccountStatus,
+  type CreateAccountInput,
+  type UpdateAccountInput,
+} from '@/api/accounts'
 import { isApiError } from '@/api/errors'
-import type { Account } from '@/api/types'
 import { useAuth } from '@/auth/useAuth'
+import {
+  AccountForm,
+  type AccountFormValues,
+} from '@/components/accounts/AccountForm'
 import { PageEmptyState } from '@/components/PageEmptyState'
 import { PageErrorAlert } from '@/components/PageErrorAlert'
 import { PageLoading } from '@/components/PageLoading'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -17,6 +31,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
 import {
   Table,
   TableBody,
@@ -26,13 +48,63 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { formatMoney } from '@/lib/money'
+import { cn } from '@/lib/utils'
+
+const selectClassName = cn(
+  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base outline-none transition-colors',
+  'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm',
+)
+
+type SheetMode = 'create' | 'edit'
+type StatusFilter = 'ALL' | AccountStatus
+
+function accountErrorKey(err: unknown): string {
+  if (err instanceof TypeError) {
+    return 'common.offlineOrApi'
+  }
+  if (!isApiError(err)) {
+    return 'accounts.errors.generic'
+  }
+
+  const detail = (err.code ?? err.message ?? '').trim()
+  if (detail === 'FUTURE_DATE') {
+    return 'accounts.errors.futureDate'
+  }
+  if (detail === 'IDEMPOTENCY_KEY_REUSED') {
+    return 'accounts.errors.idempotency'
+  }
+
+  if (err.status === 403) {
+    return 'accounts.errors.forbidden'
+  }
+  if (err.status === 409) {
+    return 'accounts.errors.conflict'
+  }
+  if (err.status === 404) {
+    return 'accounts.errors.notFound'
+  }
+  if (err.status === 400 || err.status === 422) {
+    return 'accounts.errors.invalid'
+  }
+  return 'accounts.errors.generic'
+}
 
 export function AccountsPage() {
   const { t } = useTranslation()
-  const { household } = useAuth()
+  const { household, user } = useAuth()
+  const isAdmin = user?.role === 'ADMIN'
+
   const [accounts, setAccounts] = useState<Account[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
+
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [sheetMode, setSheetMode] = useState<SheetMode>('create')
+  const [selected, setSelected] = useState<Account | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [statusBusyId, setStatusBusyId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     if (!household) {
@@ -45,33 +117,120 @@ export function AccountsPage() {
     setLoading(true)
     setError(null)
     try {
-      const rows = await listAccounts(household.id)
+      const rows = await listAccounts(household.id, statusFilter)
       setAccounts(rows)
     } catch (err) {
       setAccounts(null)
       if (err instanceof TypeError) {
         setError(t('common.offlineOrApi'))
-      } else if (isApiError(err)) {
-        setError(t('accounts.loadError'))
       } else {
         setError(t('accounts.loadError'))
       }
     } finally {
       setLoading(false)
     }
-  }, [household, t])
+  }, [household, statusFilter, t])
 
   useEffect(() => {
     void load()
   }, [load])
 
+  const nextSortOrder = useMemo(() => {
+    if (!accounts || accounts.length === 0) {
+      return 1
+    }
+    return Math.max(...accounts.map((row) => row.sortOrder)) + 1
+  }, [accounts])
+
+  function openCreate() {
+    setSheetMode('create')
+    setSelected(null)
+    setFormError(null)
+    setSheetOpen(true)
+  }
+
+  function openEdit(account: Account) {
+    setSheetMode('edit')
+    setSelected(account)
+    setFormError(null)
+    setSheetOpen(true)
+  }
+
+  async function handleSubmit(
+    values: AccountFormValues | UpdateAccountInput,
+  ) {
+    if (!household) {
+      setFormError(t('accounts.loadError'))
+      return
+    }
+
+    setSubmitting(true)
+    setFormError(null)
+    try {
+      if (sheetMode === 'create') {
+        await createAccount(household.id, values as CreateAccountInput)
+        toast.success(t('common.toast.created'))
+      } else if (selected) {
+        await updateAccount(
+          household.id,
+          selected.id,
+          values as UpdateAccountInput,
+        )
+        toast.success(t('common.toast.updated'))
+      }
+      setSheetOpen(false)
+      await load()
+    } catch (err) {
+      setFormError(t(accountErrorKey(err)))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function handleToggleStatus(account: Account) {
+    if (!household || !isAdmin) {
+      return
+    }
+
+    const nextStatus: AccountStatus =
+      account.status === 'ACTIVE' ? 'ARCHIVED' : 'ACTIVE'
+
+    setStatusBusyId(account.id)
+    setError(null)
+    try {
+      await updateAccountStatus(household.id, account.id, nextStatus)
+      toast.success(
+        t(
+          nextStatus === 'ARCHIVED'
+            ? 'common.toast.archived'
+            : 'common.toast.reactivated',
+        ),
+      )
+      await load()
+    } catch (err) {
+      setError(t(accountErrorKey(err)))
+    } finally {
+      setStatusBusyId(null)
+    }
+  }
+
   return (
     <section className="grid gap-4">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t('accounts.title')}
-        </h1>
-        <p className="text-sm text-muted-foreground">{t('accounts.subtitle')}</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {t('accounts.title')}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {t('accounts.subtitle')}
+          </p>
+        </div>
+        {isAdmin ? (
+          <Button onClick={openCreate}>
+            <PlusCircle data-icon="inline-start" />
+            {t('accounts.add')}
+          </Button>
+        ) : null}
       </div>
 
       {error ? (
@@ -83,16 +242,39 @@ export function AccountsPage() {
       ) : null}
 
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Wallet className="size-4" aria-hidden />
-            {t('accounts.title')}
-          </CardTitle>
-          <CardDescription>
-            {household
-              ? `${household.name} · ${household.currency}`
-              : t('accounts.subtitle')}
-          </CardDescription>
+        <CardHeader className="gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="space-y-1.5">
+              <CardTitle className="flex items-center gap-2">
+                <Wallet className="size-4" aria-hidden />
+                {t('accounts.title')}
+              </CardTitle>
+              <CardDescription>
+                {household
+                  ? `${household.name} · ${household.currency}`
+                  : t('accounts.subtitle')}
+              </CardDescription>
+            </div>
+            <div className="grid min-w-40 gap-1.5">
+              <Label htmlFor="account-status-filter">
+                {t('accounts.filterStatus')}
+              </Label>
+              <select
+                id="account-status-filter"
+                className={selectClassName}
+                value={statusFilter}
+                onChange={(event) =>
+                  setStatusFilter(event.target.value as StatusFilter)
+                }
+              >
+                <option value="ALL">{t('accounts.filters.all')}</option>
+                <option value="ACTIVE">{t('accounts.statuses.ACTIVE')}</option>
+                <option value="ARCHIVED">
+                  {t('accounts.statuses.ARCHIVED')}
+                </option>
+              </select>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -101,11 +283,14 @@ export function AccountsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t('accounts.name')}</TableHead>
-                  <TableHead>{t('accounts.type')}</TableHead>
-                  <TableHead>{t('accounts.owner')}</TableHead>
-                  <TableHead>{t('accounts.balance')}</TableHead>
-                  <TableHead>{t('accounts.status')}</TableHead>
+                  <TableHead>{t('accounts.fields.name')}</TableHead>
+                  <TableHead>{t('accounts.fields.type')}</TableHead>
+                  <TableHead>{t('accounts.fields.owner')}</TableHead>
+                  <TableHead>{t('accounts.fields.balance')}</TableHead>
+                  <TableHead>{t('accounts.fields.status')}</TableHead>
+                  {isAdmin ? (
+                    <TableHead>{t('accounts.fields.actions')}</TableHead>
+                  ) : null}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -143,18 +328,70 @@ export function AccountsPage() {
                         })}
                       </Badge>
                     </TableCell>
+                    {isAdmin ? (
+                      <TableCell>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openEdit(account)}
+                          >
+                            <Pencil data-icon="inline-start" />
+                            {t('accounts.edit')}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={statusBusyId === account.id}
+                            onClick={() => void handleToggleStatus(account)}
+                          >
+                            <Archive data-icon="inline-start" />
+                            {account.status === 'ACTIVE'
+                              ? t('accounts.archive')
+                              : t('accounts.reactivate')}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    ) : null}
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           ) : (
-            <PageEmptyState
-              icon={Wallet}
-              message={t('accounts.empty')}
-            />
+            <PageEmptyState icon={Wallet} message={t('accounts.empty')} />
           )}
         </CardContent>
       </Card>
+
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent className="overflow-y-auto sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle>
+              {sheetMode === 'create'
+                ? t('accounts.form.createTitle')
+                : t('accounts.form.editTitle')}
+            </SheetTitle>
+            <SheetDescription>
+              {sheetMode === 'create'
+                ? t('accounts.form.createHint')
+                : t('accounts.form.editHint')}
+            </SheetDescription>
+          </SheetHeader>
+          <div className="px-4 pb-4">
+            <AccountForm
+              key={`${sheetMode}-${selected?.id ?? 'new'}-${sheetOpen}`}
+              mode={sheetMode}
+              account={selected}
+              defaultSortOrder={nextSortOrder}
+              currency={household?.currency ?? 'MMK'}
+              submitting={submitting}
+              error={formError}
+              onSubmit={handleSubmit}
+              onCancel={() => setSheetOpen(false)}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
     </section>
   )
 }
