@@ -5,6 +5,7 @@ import { RequireAuth } from '@/auth/RequireAuth'
 import { RequireGuest } from '@/auth/RequireGuest'
 import { AppLayout } from '@/components/AppLayout'
 import { AccountsPage } from '@/pages/AccountsPage'
+import { BeneficiariesPage } from '@/pages/BeneficiariesPage'
 import { ChangePasswordPage } from '@/pages/ChangePasswordPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { ExpensesPage } from '@/pages/ExpensesPage'
@@ -21,12 +22,12 @@ export default function App() {
             <Route element={<RequireGuest />}>
               <Route path="login" element={<LoginPage />} />
             </Route>
-
             <Route element={<RequireAuth />}>
               <Route element={<AppLayout />}>
                 <Route index element={<DashboardPage />} />
                 <Route path="expenses" element={<ExpensesPage />} />
                 <Route path="accounts" element={<AccountsPage />} />
+                <Route path="beneficiaries" element={<BeneficiariesPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="change-password" element={<ChangePasswordPage />} />
               </Route>
