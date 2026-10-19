@@ -14,6 +14,7 @@ import { LoginPage } from '@/pages/LoginPage'
 import { MembersPage } from '@/pages/MembersPage'
 import { ReportsPage } from '@/pages/ReportsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
+import { TransfersPage } from '@/pages/TransfersPage'
 import { ThemeProvider } from '@/theme/ThemeProvider'
 
 export default function App() {
@@ -30,6 +31,7 @@ export default function App() {
               <Route element={<AppLayout />}>
                 <Route index element={<DashboardPage />} />
                 <Route path="expenses" element={<ExpensesPage />} />
+                <Route path="transfers" element={<TransfersPage />} />
                 <Route path="accounts" element={<AccountsPage />} />
                 <Route path="categories" element={<CategoriesPage />} />
                 <Route path="beneficiaries" element={<BeneficiariesPage />} />
