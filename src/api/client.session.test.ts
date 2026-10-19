@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  advanceAuthGeneration,
   apiFetch,
-  clearCsrf,
+  ensureCsrf,
+  resetAuthClientForTests,
   setUnauthorizedHandler,
 } from '@/api/client'
 
@@ -14,10 +16,19 @@ function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
   })
 }
 
+function createDeferred<T>() {
+  let resolve!: (value: T) => void
+  let reject!: (reason?: unknown) => void
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res
+    reject = rej
+  })
+  return { promise, resolve, reject }
+}
+
 describe('api client session invalidation', () => {
   beforeEach(() => {
-    clearCsrf()
-    setUnauthorizedHandler(null)
+    resetAuthClientForTests()
     vi.stubGlobal('fetch', vi.fn())
   })
 
@@ -87,5 +98,71 @@ describe('api client session invalidation', () => {
     ).rejects.toMatchObject({ status: 401 })
 
     expect(onUnauthorized).not.toHaveBeenCalled()
+  })
+
+  it('ignores a delayed 401 after logout and a new login generation', async () => {
+    const onUnauthorized = vi.fn()
+    setUnauthorizedHandler(onUnauthorized)
+
+    const deferred = createDeferred<Response>()
+    const fetchMock = vi.mocked(fetch)
+    fetchMock.mockImplementationOnce(() => deferred.promise)
+
+    const pending = expect(
+      apiFetch('/api/v1/households/hh/accounts'),
+    ).rejects.toMatchObject({ status: 401 })
+    advanceAuthGeneration()
+    advanceAuthGeneration()
+
+    deferred.resolve(jsonResponse({ detail: 'Unauthorized' }, { status: 401 }))
+    await pending
+    expect(onUnauthorized).not.toHaveBeenCalled()
+
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ detail: 'Unauthorized' }, { status: 401 }),
+    )
+    await expect(apiFetch('/api/v1/auth/me')).rejects.toMatchObject({
+      status: 401,
+    })
+    expect(onUnauthorized).toHaveBeenCalledWith({ path: '/api/v1/auth/me' })
+  })
+
+  it('does not clear the new session CSRF on a delayed prior-session 403', async () => {
+    const fetchMock = vi.mocked(fetch)
+    const deferred = createDeferred<Response>()
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse({ token: 'old-token', headerName: 'X-CSRF-TOKEN' }),
+      )
+      .mockImplementationOnce(() => deferred.promise)
+
+    const pending = expect(
+      apiFetch('/api/v1/households/hh/expenses', {
+        method: 'POST',
+        csrf: true,
+        body: { amount: '10' },
+      }),
+    ).rejects.toMatchObject({ status: 403 })
+
+    await vi.waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+    })
+
+    advanceAuthGeneration()
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ token: 'new-token', headerName: 'X-CSRF-TOKEN' }),
+    )
+    await expect(ensureCsrf()).resolves.toMatchObject({ token: 'new-token' })
+
+    deferred.resolve(
+      jsonResponse(
+        { detail: 'Forbidden', code: 'CSRF' },
+        { status: 403, statusText: 'Forbidden' },
+      ),
+    )
+    await pending
+
+    await expect(ensureCsrf()).resolves.toMatchObject({ token: 'new-token' })
+    expect(fetchMock).toHaveBeenCalledTimes(3)
   })
 })

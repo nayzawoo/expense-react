@@ -3,11 +3,11 @@ import { afterEach } from 'vitest'
 import { cleanup } from '@testing-library/react'
 
 import i18n from '@/i18n'
-import { clearCsrf } from '@/api/client'
+import { resetAuthClientForTests } from '@/api/client'
 
 afterEach(() => {
   cleanup()
-  clearCsrf()
+  resetAuthClientForTests()
   void i18n.changeLanguage('en')
 })
 

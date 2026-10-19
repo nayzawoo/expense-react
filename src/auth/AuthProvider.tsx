@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
 
 import {
   changePassword as changePasswordRequest,
@@ -6,7 +12,12 @@ import {
   login as loginRequest,
   logout as logoutRequest,
 } from '@/api/auth'
-import { clearCsrf, setUnauthorizedHandler } from '@/api/client'
+import {
+  advanceAuthGeneration,
+  clearCsrf,
+  getAuthGeneration,
+  setUnauthorizedHandler,
+} from '@/api/client'
 import { isApiError } from '@/api/errors'
 import { fetchHousehold } from '@/api/household'
 import type { CurrentUser, Household } from '@/api/types'
@@ -28,15 +39,18 @@ async function loadHouseholdSafe(): Promise<Household | null> {
   }
 }
 
+function generationChanged(generation: number): boolean {
+  return generation !== getAuthGeneration()
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('loading')
   const [user, setUser] = useState<CurrentUser | null>(null)
   const [household, setHousehold] = useState<Household | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const sessionEpoch = useRef(0)
 
   const invalidateSession = useCallback(() => {
-    sessionEpoch.current += 1
+    advanceAuthGeneration()
     clearCsrf()
     setUser(null)
     setHousehold(null)
@@ -52,25 +66,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [invalidateSession])
 
   const refreshSession = useCallback(async () => {
-    const epoch = sessionEpoch.current
+    const generation = getAuthGeneration()
     try {
       const nextUser = await fetchCurrentUser()
-      if (epoch !== sessionEpoch.current) {
+      if (generationChanged(generation)) {
+        return
+      }
+      const nextHousehold = nextUser.mustChangePassword
+        ? null
+        : await loadHouseholdSafe()
+      if (generationChanged(generation)) {
         return
       }
       setUser(nextUser)
-      if (nextUser.mustChangePassword) {
-        setHousehold(null)
-      } else {
-        setHousehold(await loadHouseholdSafe())
-      }
-      if (epoch !== sessionEpoch.current) {
-        return
-      }
+      setHousehold(nextHousehold)
       setStatus('authenticated')
       setError(null)
     } catch (err) {
-      if (epoch !== sessionEpoch.current) {
+      if (generationChanged(generation)) {
         return
       }
       setUser(null)
@@ -90,20 +103,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refreshSession])
 
   const login = useCallback(async (email: string, password: string) => {
+    const started = getAuthGeneration()
     const nextUser = await loginRequest(email, password)
-    setUser(nextUser)
-    if (nextUser.mustChangePassword) {
-      setHousehold(null)
-    } else {
-      setHousehold(await loadHouseholdSafe())
+    if (generationChanged(started)) {
+      return
     }
+    const generation = advanceAuthGeneration()
+    const nextHousehold = nextUser.mustChangePassword
+      ? null
+      : await loadHouseholdSafe()
+    if (generationChanged(generation)) {
+      return
+    }
+    setUser(nextUser)
+    setHousehold(nextHousehold)
     setStatus('authenticated')
     setError(null)
   }, [])
 
   const logout = useCallback(async () => {
+    const started = getAuthGeneration()
     try {
       await logoutRequest()
+      if (generationChanged(started)) {
+        return
+      }
+      advanceAuthGeneration()
       clearCsrf()
       setUser(null)
       setHousehold(null)
@@ -119,7 +144,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const changePassword = useCallback(
     async (currentPassword: string, newPassword: string) => {
+      const started = getAuthGeneration()
       await changePasswordRequest(currentPassword, newPassword)
+      if (generationChanged(started)) {
+        return
+      }
+      advanceAuthGeneration()
       clearCsrf()
       setUser(null)
       setHousehold(null)

@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ApiError } from '@/api/errors'
-import { apiFetch, clearCsrf, ensureCsrf } from '@/api/client'
+import {
+  advanceAuthGeneration,
+  apiFetch,
+  ensureCsrf,
+  resetAuthClientForTests,
+} from '@/api/client'
 
 function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
   return new Response(JSON.stringify(body), {
@@ -11,9 +16,19 @@ function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
   })
 }
 
+function createDeferred<T>() {
+  let resolve!: (value: T) => void
+  let reject!: (reason?: unknown) => void
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res
+    reject = rej
+  })
+  return { promise, resolve, reject }
+}
+
 describe('api client', () => {
   beforeEach(() => {
-    clearCsrf()
+    resetAuthClientForTests()
     vi.stubGlobal('fetch', vi.fn())
   })
 
@@ -109,5 +124,26 @@ describe('api client', () => {
     await expect(
       apiFetch<void>('/api/v1/auth/logout', { method: 'POST' }),
     ).resolves.toBeUndefined()
+  })
+
+  it('does not cache a CSRF token after the auth generation advances', async () => {
+    const fetchMock = vi.mocked(fetch)
+    const deferred = createDeferred<Response>()
+    fetchMock.mockImplementationOnce(() => deferred.promise)
+
+    const pending = expect(ensureCsrf()).rejects.toBeInstanceOf(TypeError)
+    advanceAuthGeneration()
+    deferred.resolve(
+      jsonResponse({ token: 'stale-token', headerName: 'X-CSRF-TOKEN' }),
+    )
+
+    await pending
+
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ token: 'fresh-token', headerName: 'X-CSRF-TOKEN' }),
+    )
+    const next = await ensureCsrf()
+    expect(next.token).toBe('fresh-token')
+    expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 })

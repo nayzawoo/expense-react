@@ -6,6 +6,7 @@ type CsrfState = CsrfBootstrap | null
 
 let csrfState: CsrfState = null
 let csrfInFlight: Promise<CsrfBootstrap> | null = null
+let authGeneration = 0
 
 type UnauthorizedHandler = (detail: { path: string }) => void
 let unauthorizedHandler: UnauthorizedHandler | null = null
@@ -25,9 +26,29 @@ export function setUnauthorizedHandler(
   unauthorizedHandler = handler
 }
 
+export function getAuthGeneration(): number {
+  return authGeneration
+}
+
+/** Advance the auth generation and drop CSRF that belonged to the prior session. */
+export function advanceAuthGeneration(): number {
+  authGeneration += 1
+  csrfState = null
+  csrfInFlight = null
+  return authGeneration
+}
+
 export function clearCsrf(): void {
   csrfState = null
   csrfInFlight = null
+}
+
+/** Test helper — not for production call sites. */
+export function resetAuthClientForTests(): void {
+  authGeneration = 0
+  csrfState = null
+  csrfInFlight = null
+  unauthorizedHandler = null
 }
 
 async function readError(response: Response): Promise<ApiError> {
@@ -76,7 +97,8 @@ export async function ensureCsrf(): Promise<CsrfBootstrap> {
     return csrfState
   }
   if (!csrfInFlight) {
-    csrfInFlight = (async () => {
+    const generation = authGeneration
+    const pending = (async () => {
       const response = await fetch(apiUrl('/api/v1/auth/csrf'), {
         method: 'GET',
         credentials: 'include',
@@ -88,11 +110,22 @@ export async function ensureCsrf(): Promise<CsrfBootstrap> {
         throw await readError(response)
       }
       const body = (await response.json()) as CsrfBootstrap
+      if (generation !== authGeneration) {
+        throw new TypeError('CSRF bootstrap was superseded')
+      }
       csrfState = body
       return body
-    })().finally(() => {
-      csrfInFlight = null
-    })
+    })()
+    csrfInFlight = pending
+    void pending
+      .finally(() => {
+        if (csrfInFlight === pending) {
+          csrfInFlight = null
+        }
+      })
+      .catch(() => {
+        // Callers of csrfInFlight observe the rejection.
+      })
   }
   return csrfInFlight
 }
@@ -116,6 +149,7 @@ export async function apiFetch<T>(
     ignoreUnauthorized = false,
     ...rest
   } = options
+  const requestGeneration = authGeneration
   const headers = new Headers(initHeaders)
   headers.set('Accept', 'application/json')
 
@@ -136,12 +170,13 @@ export async function apiFetch<T>(
   })
 
   if (!response.ok) {
-    if (response.status === 403 && csrf) {
+    const generationCurrent = requestGeneration === authGeneration
+    if (response.status === 403 && csrf && generationCurrent) {
       clearCsrf()
     }
     if (response.status === 401 && !ignoreUnauthorized) {
       const normalized = normalizeApiPath(path)
-      if (!CREDENTIAL_401_PATHS.has(normalized)) {
+      if (!CREDENTIAL_401_PATHS.has(normalized) && generationCurrent) {
         clearCsrf()
         unauthorizedHandler?.({ path: normalized })
       }
