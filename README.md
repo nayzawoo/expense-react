@@ -24,7 +24,16 @@ Open the local Vite URL (default `http://localhost:5173`).
 
 The default setup keeps `VITE_API_BASE_URL` empty so the browser calls same-origin
 `/api/v1/...`. Vite proxies `/api` to `VITE_DEV_API_PROXY_TARGET`
-(default `http://localhost:8080`).
+(default `http://localhost:8080`) and removes the browser `Origin` header on those
+proxied requests. That keeps local Vite (`http://localhost:5173`) working against a
+stock Spring API whose credentialed CORS allow-list is only `:4200`.
+
+If you set an absolute `VITE_API_BASE_URL` (cross-origin, no Vite proxy), add the
+Vite origin to Spring `expense.cors.allowed-origins` or browser calls will fail CORS.
+
+Local API process: run `expense-api` (documented under the private `expense-spring`
+context) on port 8080 with Postgres. Copy `.env.example` to `.env` — no secrets live
+in those Vite variables; session login uses your local household admin password.
 
 ### Environment
 

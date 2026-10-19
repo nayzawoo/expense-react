@@ -26,6 +26,14 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: proxyTarget,
           changeOrigin: true,
+          // Browser sends Origin: http://localhost:5173; Spring's local CORS
+          // allow-list defaults to :4200. Same-origin Vite proxy should not
+          // forward that Origin or credentialed /api calls get 403.
+          configure: (proxy) => {
+            proxy.on('proxyReq', (proxyReq) => {
+              proxyReq.removeHeader('origin')
+            })
+          },
         },
       },
     },
