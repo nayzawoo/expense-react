@@ -14,9 +14,11 @@ import { fetchDashboard } from '@/api/dashboard'
 import { isApiError } from '@/api/errors'
 import type { DashboardActivity, DashboardSnapshot } from '@/api/types'
 import { useAuth } from '@/auth/useAuth'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { PageEmptyState } from '@/components/PageEmptyState'
+import { PageErrorAlert } from '@/components/PageErrorAlert'
+import { PageLoading } from '@/components/PageLoading'
 import { Badge } from '@/components/ui/badge'
-import { Button, buttonVariants } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -126,15 +128,11 @@ export function DashboardPage() {
       </div>
 
       {error ? (
-        <Alert variant="destructive">
-          <AlertTitle>{t('dashboard.title')}</AlertTitle>
-          <AlertDescription className="flex flex-wrap items-center gap-3">
-            <span>{error}</span>
-            <Button size="sm" variant="outline" onClick={() => void load()}>
-              {t('common.retry')}
-            </Button>
-          </AlertDescription>
-        </Alert>
+        <PageErrorAlert
+          title={t('dashboard.title')}
+          message={error}
+          onRetry={() => void load()}
+        />
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -210,7 +208,7 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <LoadingBlock />
+              <PageLoading />
             ) : dashboard && dashboard.accounts.length > 0 ? (
               <Table>
                 <TableHeader>
@@ -240,9 +238,10 @@ export function DashboardPage() {
                 </TableBody>
               </Table>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                {t('dashboard.balancesEmpty')}
-              </p>
+              <PageEmptyState
+                icon={Wallet}
+                message={t('dashboard.balancesEmpty')}
+              />
             )}
           </CardContent>
         </Card>
@@ -257,7 +256,7 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <LoadingBlock />
+              <PageLoading />
             ) : dashboard && dashboard.recentActivity.length > 0 ? (
               <ul className="grid gap-3">
                 {dashboard.recentActivity.map((activity) => (
@@ -292,9 +291,10 @@ export function DashboardPage() {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                {t('dashboard.activityEmpty')}
-              </p>
+              <PageEmptyState
+                icon={Receipt}
+                message={t('dashboard.activityEmpty')}
+              />
             )}
           </CardContent>
         </Card>
@@ -333,18 +333,6 @@ function SummaryMetric({
         </CardContent>
       ) : null}
     </Card>
-  )
-}
-
-function LoadingBlock() {
-  const { t } = useTranslation()
-  return (
-    <div className="grid gap-2" aria-busy="true">
-      <Skeleton className="h-8 w-full" />
-      <Skeleton className="h-8 w-full" />
-      <Skeleton className="h-8 w-2/3" />
-      <p className="sr-only">{t('common.loading')}</p>
-    </div>
   )
 }
 

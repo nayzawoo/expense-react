@@ -4,6 +4,7 @@ import { AuthProvider } from '@/auth/AuthProvider'
 import { RequireAuth } from '@/auth/RequireAuth'
 import { RequireGuest } from '@/auth/RequireGuest'
 import { AppLayout } from '@/components/AppLayout'
+import { Toaster } from '@/components/ui/sonner'
 import { AccountsPage } from '@/pages/AccountsPage'
 import { BeneficiariesPage } from '@/pages/BeneficiariesPage'
 import { CategoriesPage } from '@/pages/CategoriesPage'
@@ -45,6 +46,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
+        <Toaster position="top-center" richColors closeButton />
       </AuthProvider>
     </ThemeProvider>
   )

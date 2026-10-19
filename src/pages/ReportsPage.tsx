@@ -18,7 +18,9 @@ import type {
   MonthTrendPoint,
 } from '@/api/types'
 import { useAuth } from '@/auth/useAuth'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { PageEmptyState } from '@/components/PageEmptyState'
+import { PageErrorAlert } from '@/components/PageErrorAlert'
+import { PageLoading } from '@/components/PageLoading'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -181,15 +183,11 @@ export function ReportsPage() {
       </div>
 
       {error ? (
-        <Alert variant="destructive">
-          <AlertTitle>{t('reports.title')}</AlertTitle>
-          <AlertDescription className="flex flex-wrap items-center gap-3">
-            <span>{error}</span>
-            <Button size="sm" variant="outline" onClick={() => void load()}>
-              {t('common.retry')}
-            </Button>
-          </AlertDescription>
-        </Alert>
+        <PageErrorAlert
+          title={t('reports.title')}
+          message={error}
+          onRetry={() => void load()}
+        />
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -295,7 +293,7 @@ export function ReportsPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <LoadingBlock />
+              <PageLoading />
             ) : analytics && analytics.monthlyTrend.length > 0 ? (
               <ul className="grid gap-3">
                 {analytics.monthlyTrend.map((point) => {
@@ -344,9 +342,10 @@ export function ReportsPage() {
                 })}
               </ul>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                {t('reports.monthlyTrendEmpty')}
-              </p>
+              <PageEmptyState
+                icon={BarChart3}
+                message={t('reports.monthlyTrendEmpty')}
+              />
             )}
           </CardContent>
         </Card>
@@ -363,7 +362,7 @@ export function ReportsPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <LoadingBlock />
+              <PageLoading />
             ) : analytics && analytics.categoryBreakdown.length > 0 ? (
               <Table>
                 <TableHeader>
@@ -394,9 +393,10 @@ export function ReportsPage() {
                 </TableBody>
               </Table>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                {t('reports.categoryBreakdownEmpty')}
-              </p>
+              <PageEmptyState
+                icon={PieChart}
+                message={t('reports.categoryBreakdownEmpty')}
+              />
             )}
           </CardContent>
         </Card>
@@ -532,7 +532,7 @@ function CategoryChangesCard({
       </CardHeader>
       <CardContent>
         {loading ? (
-          <LoadingBlock />
+          <PageLoading />
         ) : rows.length > 0 ? (
           <Table>
             <TableHeader>
@@ -576,7 +576,7 @@ function CategoryChangesCard({
             </TableBody>
           </Table>
         ) : (
-          <p className="text-sm text-muted-foreground">{empty}</p>
+          <PageEmptyState icon={PieChart} message={empty} />
         )}
       </CardContent>
     </Card>
@@ -640,14 +640,3 @@ function SummaryMetric({
   )
 }
 
-function LoadingBlock() {
-  const { t } = useTranslation()
-  return (
-    <div className="grid gap-2" aria-busy="true">
-      <Skeleton className="h-8 w-full" />
-      <Skeleton className="h-8 w-full" />
-      <Skeleton className="h-8 w-2/3" />
-      <p className="sr-only">{t('common.loading')}</p>
-    </div>
-  )
-}

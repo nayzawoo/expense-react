@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Filter, Pencil, PlusCircle, Receipt, Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
 import { listAccounts } from '@/api/accounts'
 import { listBeneficiaries, type Beneficiary } from '@/api/beneficiaries'
@@ -18,7 +19,9 @@ import {
   ExpenseForm,
   type ExpenseFormValues,
 } from '@/components/expenses/ExpenseForm'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { PageEmptyState } from '@/components/PageEmptyState'
+import { PageErrorAlert } from '@/components/PageErrorAlert'
+import { PageLoading } from '@/components/PageLoading'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -37,7 +40,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
   TableBody,
@@ -195,6 +197,7 @@ export function ExpensesPage() {
           beneficiaryId: values.beneficiaryId,
           note: values.note || undefined,
         })
+        toast.success(t('common.toast.created'))
       } else if (selected) {
         await replaceExpense(
           household.id,
@@ -210,6 +213,7 @@ export function ExpensesPage() {
             changeReason: values.changeReason,
           },
         )
+        toast.success(t('common.toast.updated'))
       }
       setSheetOpen(false)
       setSelected(null)
@@ -233,6 +237,7 @@ export function ExpensesPage() {
       await voidExpense(household.id, selected.id, selected.version, {
         reason,
       })
+      toast.success(t('common.toast.voided'))
       setSheetOpen(false)
       setSelected(null)
       await load()
@@ -265,15 +270,11 @@ export function ExpensesPage() {
       </div>
 
       {error ? (
-        <Alert variant="destructive">
-          <AlertTitle>{t('expenses.title')}</AlertTitle>
-          <AlertDescription className="flex flex-wrap items-center gap-3">
-            <span>{error}</span>
-            <Button size="sm" variant="outline" onClick={() => void load()}>
-              {t('common.retry')}
-            </Button>
-          </AlertDescription>
-        </Alert>
+        <PageErrorAlert
+          title={t('expenses.title')}
+          message={error}
+          onRetry={() => void load()}
+        />
       ) : null}
 
       <Card>
@@ -372,11 +373,7 @@ export function ExpensesPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="grid gap-2" aria-busy="true">
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
-            </div>
+            <PageLoading />
           ) : filtered.length > 0 ? (
             <Table>
               <TableHeader>
@@ -445,11 +442,14 @@ export function ExpensesPage() {
               </TableBody>
             </Table>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              {expenses && expenses.length > 0
-                ? t('expenses.filters.none')
-                : t('expenses.empty')}
-            </p>
+            <PageEmptyState
+              icon={Receipt}
+              message={
+                expenses && expenses.length > 0
+                  ? t('expenses.filters.none')
+                  : t('expenses.empty')
+              }
+            />
           )}
         </CardContent>
       </Card>

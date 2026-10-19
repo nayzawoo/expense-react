@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Archive, Pencil, PlusCircle, RotateCcw, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
 import {
   createBeneficiary,
@@ -16,7 +17,9 @@ import {
   BeneficiaryForm,
   type BeneficiaryFormValues,
 } from '@/components/beneficiaries/BeneficiaryForm'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { PageEmptyState } from '@/components/PageEmptyState'
+import { PageErrorAlert } from '@/components/PageErrorAlert'
+import { PageLoading } from '@/components/PageLoading'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -34,7 +37,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
   TableBody,
@@ -165,8 +167,10 @@ export function BeneficiariesPage() {
     try {
       if (sheetMode === 'create') {
         await createBeneficiary(household.id, values)
+        toast.success(t('common.toast.created'))
       } else if (selected) {
         await updateBeneficiary(household.id, selected.id, values)
+        toast.success(t('common.toast.updated'))
       }
       setSheetOpen(false)
       setSelected(null)
@@ -191,6 +195,13 @@ export function BeneficiariesPage() {
     setError(null)
     try {
       await updateBeneficiaryStatus(household.id, beneficiary.id, status)
+      toast.success(
+        t(
+          status === 'ARCHIVED'
+            ? 'common.toast.archived'
+            : 'common.toast.reactivated',
+        ),
+      )
       await load()
     } catch (err) {
       setError(t(beneficiaryErrorKey(err)))
@@ -219,15 +230,11 @@ export function BeneficiariesPage() {
       </div>
 
       {error ? (
-        <Alert variant="destructive">
-          <AlertTitle>{t('beneficiaries.title')}</AlertTitle>
-          <AlertDescription className="flex flex-wrap items-center gap-3">
-            <span>{error}</span>
-            <Button size="sm" variant="outline" onClick={() => void load()}>
-              {t('common.retry')}
-            </Button>
-          </AlertDescription>
-        </Alert>
+        <PageErrorAlert
+          title={t('beneficiaries.title')}
+          message={error}
+          onRetry={() => void load()}
+        />
       ) : null}
 
       <Card>
@@ -267,12 +274,7 @@ export function BeneficiariesPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="grid gap-2" aria-busy="true">
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-2/3" />
-              <p className="sr-only">{t('common.loading')}</p>
-            </div>
+            <PageLoading />
           ) : filtered.length > 0 ? (
             <Table>
               <TableHeader>
@@ -366,11 +368,14 @@ export function BeneficiariesPage() {
               </TableBody>
             </Table>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              {beneficiaries && beneficiaries.length > 0
-                ? t('beneficiaries.filters.none')
-                : t('beneficiaries.empty')}
-            </p>
+            <PageEmptyState
+              icon={Users}
+              message={
+                beneficiaries && beneficiaries.length > 0
+                  ? t('beneficiaries.filters.none')
+                  : t('beneficiaries.empty')
+              }
+            />
           )}
         </CardContent>
       </Card>

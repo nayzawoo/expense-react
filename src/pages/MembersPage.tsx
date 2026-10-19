@@ -8,6 +8,7 @@ import {
   UsersRound,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
 import { isApiError } from '@/api/errors'
 import {
@@ -25,6 +26,9 @@ import {
   MemberForm,
 } from '@/components/members/MemberForm'
 import { TemporaryPasswordForm } from '@/components/members/TemporaryPasswordForm'
+import { PageEmptyState } from '@/components/PageEmptyState'
+import { PageErrorAlert } from '@/components/PageErrorAlert'
+import { PageLoading } from '@/components/PageLoading'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -43,7 +47,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
   TableBody,
@@ -189,6 +192,7 @@ export function MembersPage() {
     setFormError(null)
     try {
       await createHouseholdUser(household.id, values)
+      toast.success(t('common.toast.created'))
       setSheetOpen(false)
       setSelected(null)
       await load()
@@ -209,6 +213,7 @@ export function MembersPage() {
     setFormError(null)
     try {
       await updateHouseholdUser(household.id, selected.id, values)
+      toast.success(t('common.toast.updated'))
       setSheetOpen(false)
       setSelected(null)
       await load()
@@ -229,6 +234,7 @@ export function MembersPage() {
     setFormError(null)
     try {
       await assignTemporaryPassword(household.id, selected.id, temporaryPassword)
+      toast.success(t('common.toast.passwordAssigned'))
       setSheetOpen(false)
       setSelected(null)
       await load()
@@ -249,6 +255,7 @@ export function MembersPage() {
     setError(null)
     try {
       await updateHouseholdUser(household.id, member.id, { status })
+      toast.success(t('common.toast.updated'))
       await load()
     } catch (err) {
       setError(t(memberErrorKey(err)))
@@ -294,15 +301,11 @@ export function MembersPage() {
       </div>
 
       {error ? (
-        <Alert variant="destructive">
-          <AlertTitle>{t('members.title')}</AlertTitle>
-          <AlertDescription className="flex flex-wrap items-center gap-3">
-            <span>{error}</span>
-            <Button size="sm" variant="outline" onClick={() => void load()}>
-              {t('common.retry')}
-            </Button>
-          </AlertDescription>
-        </Alert>
+        <PageErrorAlert
+          title={t('members.title')}
+          message={error}
+          onRetry={() => void load()}
+        />
       ) : null}
 
       <Card>
@@ -338,12 +341,7 @@ export function MembersPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="grid gap-2" aria-busy="true">
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-2/3" />
-              <p className="sr-only">{t('common.loading')}</p>
-            </div>
+            <PageLoading />
           ) : filtered.length > 0 ? (
             <Table>
               <TableHeader>
@@ -453,11 +451,14 @@ export function MembersPage() {
               </TableBody>
             </Table>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              {members && members.length > 0
-                ? t('members.filters.none')
-                : t('members.empty')}
-            </p>
+            <PageEmptyState
+              icon={UsersRound}
+              message={
+                members && members.length > 0
+                  ? t('members.filters.none')
+                  : t('members.empty')
+              }
+            />
           )}
         </CardContent>
       </Card>
