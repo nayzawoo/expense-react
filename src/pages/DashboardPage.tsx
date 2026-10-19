@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
-import { PlusCircle, Sparkles } from 'lucide-react'
+import { PlusCircle, Wallet } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { useAuth } from '@/auth/useAuth'
 import { buttonVariants } from '@/components/ui/button'
 import {
   Card,
@@ -14,6 +15,7 @@ import { cn } from '@/lib/utils'
 
 export function DashboardPage() {
   const { t } = useTranslation()
+  const { user, household } = useAuth()
 
   return (
     <section className="grid gap-4">
@@ -23,7 +25,9 @@ export function DashboardPage() {
             {t('dashboard.title')}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {t('dashboard.subtitle')}
+            {user
+              ? t('dashboard.greeting', { name: user.displayName })
+              : t('dashboard.subtitle')}
           </p>
         </div>
         <Link to="/expenses" className={cn(buttonVariants())}>
@@ -32,20 +36,60 @@ export function DashboardPage() {
         </Link>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="size-4" aria-hidden />
-            {t('dashboard.title')}
-          </CardTitle>
-          <CardDescription>{t('dashboard.placeholder')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            {t('common.comingSoon')}
-          </p>
-        </CardContent>
-      </Card>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('dashboard.household')}</CardTitle>
+            <CardDescription>{t('dashboard.subtitle')}</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-2 text-sm">
+            {household ? (
+              <>
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">
+                    {t('dashboard.household')}
+                  </span>
+                  <span className="font-medium">{household.name}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">
+                    {t('dashboard.currency')}
+                  </span>
+                  <span className="font-medium">{household.currency}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">
+                    {t('dashboard.timezone')}
+                  </span>
+                  <span className="font-medium">{household.timezone}</span>
+                </div>
+              </>
+            ) : (
+              <p className="text-muted-foreground">
+                {t('dashboard.signedOutHint')}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Wallet className="size-4" aria-hidden />
+              {t('accounts.title')}
+            </CardTitle>
+            <CardDescription>{t('accounts.subtitle')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link
+              to="/accounts"
+              className={cn(buttonVariants({ variant: 'outline' }))}
+            >
+              {t('dashboard.accountsPreview')}
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
     </section>
   )
 }

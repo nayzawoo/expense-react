@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next'
 
+import { useAuth } from '@/auth/useAuth'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -11,6 +13,7 @@ import {
 
 export function SettingsPage() {
   const { t } = useTranslation()
+  const { user, logout } = useAuth()
 
   return (
     <section className="grid gap-4">
@@ -28,6 +31,35 @@ export function SettingsPage() {
         </CardHeader>
         <CardContent>
           <LanguageSwitcher />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('settings.session')}</CardTitle>
+          <CardDescription>
+            {user
+              ? t('settings.signedInAs', {
+                  name: user.displayName,
+                  email: user.email,
+                })
+              : t('settings.subtitle')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-center gap-3">
+          {user ? (
+            <p className="text-sm text-muted-foreground">
+              {t('settings.role', { role: user.role })}
+            </p>
+          ) : null}
+          <Button
+            variant="outline"
+            onClick={() => {
+              void logout()
+            }}
+          >
+            {t('nav.logout')}
+          </Button>
         </CardContent>
       </Card>
     </section>
