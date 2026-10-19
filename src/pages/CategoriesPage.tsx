@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Archive, Pencil, PlusCircle, Tags } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
 import {
   createCategory,
@@ -16,7 +17,9 @@ import {
   CategoryForm,
   type CategoryFormValues,
 } from '@/components/categories/CategoryForm'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { PageEmptyState } from '@/components/PageEmptyState'
+import { PageErrorAlert } from '@/components/PageErrorAlert'
+import { PageLoading } from '@/components/PageLoading'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -34,7 +37,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
   TableBody,
@@ -153,8 +155,10 @@ export function CategoriesPage() {
     try {
       if (sheetMode === 'create') {
         await createCategory(household.id, values)
+        toast.success(t('common.toast.created'))
       } else if (selected) {
         await updateCategory(household.id, selected.id, values)
+        toast.success(t('common.toast.updated'))
       }
       setSheetOpen(false)
       await load()
@@ -177,6 +181,13 @@ export function CategoriesPage() {
     setError(null)
     try {
       await updateCategoryStatus(household.id, category.id, nextStatus)
+      toast.success(
+        t(
+          nextStatus === 'ARCHIVED'
+            ? 'common.toast.archived'
+            : 'common.toast.reactivated',
+        ),
+      )
       await load()
     } catch (err) {
       setError(t(categoryErrorKey(err)))
@@ -205,15 +216,11 @@ export function CategoriesPage() {
       </div>
 
       {error ? (
-        <Alert variant="destructive">
-          <AlertTitle>{t('categories.title')}</AlertTitle>
-          <AlertDescription className="flex flex-wrap items-center gap-3">
-            <span>{error}</span>
-            <Button size="sm" variant="outline" onClick={() => void load()}>
-              {t('common.retry')}
-            </Button>
-          </AlertDescription>
-        </Alert>
+        <PageErrorAlert
+          title={t('categories.title')}
+          message={error}
+          onRetry={() => void load()}
+        />
       ) : null}
 
       <Card>
@@ -255,12 +262,7 @@ export function CategoriesPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="grid gap-2" aria-busy="true">
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-2/3" />
-              <p className="sr-only">{t('common.loading')}</p>
-            </div>
+            <PageLoading />
           ) : categories && categories.length > 0 ? (
             <Table>
               <TableHeader>
@@ -351,9 +353,7 @@ export function CategoriesPage() {
               </TableBody>
             </Table>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              {t('categories.empty')}
-            </p>
+            <PageEmptyState icon={Tags} message={t('categories.empty')} />
           )}
         </CardContent>
       </Card>

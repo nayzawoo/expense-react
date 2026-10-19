@@ -6,9 +6,10 @@ import { listAccounts } from '@/api/accounts'
 import { isApiError } from '@/api/errors'
 import type { Account } from '@/api/types'
 import { useAuth } from '@/auth/useAuth'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { PageEmptyState } from '@/components/PageEmptyState'
+import { PageErrorAlert } from '@/components/PageErrorAlert'
+import { PageLoading } from '@/components/PageLoading'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -16,7 +17,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
   TableBody,
@@ -75,15 +75,11 @@ export function AccountsPage() {
       </div>
 
       {error ? (
-        <Alert variant="destructive">
-          <AlertTitle>{t('accounts.title')}</AlertTitle>
-          <AlertDescription className="flex flex-wrap items-center gap-3">
-            <span>{error}</span>
-            <Button size="sm" variant="outline" onClick={() => void load()}>
-              {t('common.retry')}
-            </Button>
-          </AlertDescription>
-        </Alert>
+        <PageErrorAlert
+          title={t('accounts.title')}
+          message={error}
+          onRetry={() => void load()}
+        />
       ) : null}
 
       <Card>
@@ -100,12 +96,7 @@ export function AccountsPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="grid gap-2" aria-busy="true">
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-2/3" />
-              <p className="sr-only">{t('common.loading')}</p>
-            </div>
+            <PageLoading />
           ) : accounts && accounts.length > 0 ? (
             <Table>
               <TableHeader>
@@ -157,7 +148,10 @@ export function AccountsPage() {
               </TableBody>
             </Table>
           ) : (
-            <p className="text-sm text-muted-foreground">{t('accounts.empty')}</p>
+            <PageEmptyState
+              icon={Wallet}
+              message={t('accounts.empty')}
+            />
           )}
         </CardContent>
       </Card>

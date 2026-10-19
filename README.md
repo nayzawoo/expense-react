@@ -6,10 +6,11 @@ React browser client for the Spring household expense API.
 
 - Vite + React 19 + TypeScript
 - Tailwind CSS 4
-- shadcn/ui (Nova) + Lucide icons
+- shadcn/ui (Nova) + Lucide icons + Sonner toasts
 - React Router
 - i18next (`en` / `my`) with localStorage language preference
 - Light / dark / system theme (`expense_theme` in localStorage; `dark` class on `html`)
+- Shared page loading / error / empty helpers for list views
 - Session + CSRF calls to the Spring API (`credentials: 'include'`)
 
 ## Quick start

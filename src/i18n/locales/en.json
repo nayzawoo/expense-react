@@ -492,6 +492,14 @@
     "loading": "Loading…",
     "retry": "Retry",
     "cancel": "Cancel",
-    "offlineOrApi": "The API did not respond. Confirm the Spring server and proxy settings."
+    "offlineOrApi": "The API did not respond. Confirm the Spring server and proxy settings.",
+    "toast": {
+      "created": "Created successfully.",
+      "updated": "Changes saved.",
+      "voided": "Voided successfully.",
+      "archived": "Archived.",
+      "reactivated": "Reactivated.",
+      "passwordAssigned": "Temporary password assigned."
+    }
   }
 }
