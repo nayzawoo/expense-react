@@ -10,6 +10,7 @@
     "categories": "Categories",
     "beneficiaries": "Beneficiaries",
     "reports": "Reports",
+    "members": "Members",
     "settings": "Settings",
     "login": "Sign in",
     "logout": "Sign out",
@@ -317,6 +318,78 @@
       "up": "Spending is up by {{amount}} ({{percent}}). Top contributors: {{contributors}}.",
       "down": "Spending is down by {{amount}} ({{percent}}). Top contributors: {{contributors}}.",
       "noContributors": "none listed"
+    }
+  },
+  "members": {
+    "title": "Household members",
+    "subtitle": "Provision login users, roles, and account status for this household.",
+    "empty": "No household members yet.",
+    "add": "Add member",
+    "edit": "Edit",
+    "disable": "Disable",
+    "enable": "Enable",
+    "resetPassword": "Reset password",
+    "you": "You",
+    "adminOnly": "Only household admins can manage members.",
+    "loadError": "Could not load household members.",
+    "fields": {
+      "displayName": "Display name",
+      "email": "Email",
+      "role": "Role",
+      "status": "Status",
+      "password": "Password",
+      "temporaryPassword": "Temporary password",
+      "actions": "Actions"
+    },
+    "filters": {
+      "allStatuses": "All statuses",
+      "none": "No members match this status filter."
+    },
+    "roles": {
+      "ADMIN": "Admin",
+      "MEMBER": "Member"
+    },
+    "statuses": {
+      "ACTIVE": "Active",
+      "DISABLED": "Disabled"
+    },
+    "password": {
+      "mustChange": "Must change",
+      "completed": "Changed",
+      "pending": "Not set"
+    },
+    "form": {
+      "createTitle": "Add member",
+      "editTitle": "Edit member",
+      "resetPasswordTitle": "Reset temporary password",
+      "createHint": "Creates an active household login with a temporary password. The password is not shown again by the API.",
+      "editHint": "Update display name, email, role, or status. You cannot change your own role, status, or email here.",
+      "resetPasswordSheetHint": "Assign a temporary password for another user. Their sessions are revoked.",
+      "create": "Save member",
+      "save": "Save changes",
+      "resetPassword": "Assign password",
+      "saving": "Saving…",
+      "updatingStatus": "Updating…",
+      "displayNamePlaceholder": "e.g. Sample Member",
+      "emailPlaceholder": "member@example.com",
+      "passwordPlaceholder": "At least 8 characters",
+      "passwordHint": "Share this temporary password out of band. The new user must change it on first sign-in.",
+      "resetPasswordHint": "The previous password stops working. The user must change this temporary password after sign-in.",
+      "selfEditHint": "You can update your display name here. Change your own email from profile, and use Settings for preferences.",
+      "displayNameRequired": "Enter a display name.",
+      "displayNameTooLong": "Display name must be 120 characters or fewer.",
+      "emailRequired": "Enter an email address.",
+      "passwordTooShort": "Temporary password must be at least 8 characters.",
+      "roleRequired": "Choose a role.",
+      "statusRequired": "Choose a status.",
+      "errorTitle": "Could not save"
+    },
+    "errors": {
+      "generic": "Something went wrong with this member.",
+      "invalid": "Check the form values and try again.",
+      "conflict": "That email is already in use, or the last active admin cannot be demoted or disabled.",
+      "forbidden": "You do not have permission for this action.",
+      "notFound": "That member was not found."
     }
   },
   "settings": {
