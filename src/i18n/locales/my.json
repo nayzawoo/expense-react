@@ -33,7 +33,28 @@
     "timezone": "အချိန်ဇုန်",
     "accountsPreview": "အကောင့်များ ဖွင့်ရန်",
     "quickAdd": "အသုံးစရိတ် ထည့်ရန်",
-    "signedOutHint": "API မှ အိမ်သုံးဒေတာ တင်ရန် ဝင်ရောက်ပါ။"
+    "signedOutHint": "API မှ အိမ်သုံးဒေတာ တင်ရန် ဝင်ရောက်ပါ။",
+    "loadError": "ဒက်ရှ်ဘုတ် အနှစ်ချုပ်ကို တင်၍မရပါ။",
+    "totalBalance": "စုစုပေါင်း လက်ကျန်",
+    "expense": "အသုံးစရိတ်",
+    "income": "ဝင်ငွေ",
+    "net": "အသားတင်",
+    "balances": "အကောင့် လက်ကျန်များ",
+    "balancesEmpty": "ပြသရန် အကောင့် လက်ကျန် မရှိသေးပါ။",
+    "recentActivity": "မကြာသေးမီ လှုပ်ရှားမှု",
+    "recentActivityHint": "နောက်ဆုံး အသုံးစရိတ်၊ ဝင်ငွေနှင့် လွှဲပြောင်းမှုများ။",
+    "activityEmpty": "ဤကာလတွင် မကြာသေးမီ လှုပ်ရှားမှု မရှိပါ။",
+    "periodRange": "{{from}} – {{to}}",
+    "asOf": "{{date}} အထိ",
+    "elapsedAverage": "ယခုအထိ တစ်ရက်လျှင် ပျမ်းမျှ {{amount}}",
+    "activity": {
+      "transferBetween": "{{from}} → {{to}}",
+      "kinds": {
+        "EXPENSE": "အသုံးစရိတ်",
+        "INCOME": "ဝင်ငွေ",
+        "TRANSFER": "လွှဲပြောင်း"
+      }
+    }
   },
   "expenses": {
     "title": "အသုံးစရိတ်များ",

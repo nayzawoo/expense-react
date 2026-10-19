@@ -33,7 +33,28 @@
     "timezone": "Timezone",
     "accountsPreview": "Open accounts",
     "quickAdd": "Add expense",
-    "signedOutHint": "Sign in to load household data from the API."
+    "signedOutHint": "Sign in to load household data from the API.",
+    "loadError": "Could not load the dashboard summary.",
+    "totalBalance": "Total balance",
+    "expense": "Expense",
+    "income": "Income",
+    "net": "Net",
+    "balances": "Account balances",
+    "balancesEmpty": "No account balances to show yet.",
+    "recentActivity": "Recent activity",
+    "recentActivityHint": "Latest expenses, income, and transfers.",
+    "activityEmpty": "No recent activity in this period.",
+    "periodRange": "{{from}} – {{to}}",
+    "asOf": "As of {{date}}",
+    "elapsedAverage": "Avg {{amount}} / day so far",
+    "activity": {
+      "transferBetween": "{{from}} → {{to}}",
+      "kinds": {
+        "EXPENSE": "Expense",
+        "INCOME": "Income",
+        "TRANSFER": "Transfer"
+      }
+    }
   },
   "expenses": {
     "title": "Expenses",
