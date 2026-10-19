@@ -32,8 +32,69 @@
   "expenses": {
     "title": "Expenses",
     "subtitle": "Review and record household expenses.",
-    "empty": "Expense entry will land in a later slice.",
-    "add": "Add expense"
+    "empty": "No posted expenses yet.",
+    "add": "Add expense",
+    "edit": "Edit",
+    "readOnly": "View only",
+    "loadError": "Could not load expenses.",
+    "fields": {
+      "date": "Date",
+      "amount": "Amount",
+      "account": "Account",
+      "category": "Category",
+      "beneficiary": "Beneficiary",
+      "note": "Note",
+      "changeReason": "Change reason",
+      "voidReason": "Void reason",
+      "actions": "Actions"
+    },
+    "filters": {
+      "title": "Filters",
+      "hint": "Narrow the posted expense list on this device.",
+      "search": "Search",
+      "searchPlaceholder": "Note, account, category…",
+      "allAccounts": "All accounts",
+      "allCategories": "All categories",
+      "from": "From",
+      "to": "To",
+      "none": "No expenses match these filters."
+    },
+    "form": {
+      "createTitle": "Add expense",
+      "editTitle": "Edit expense",
+      "createHint": "Creates a posted expense with an immutable revision.",
+      "editHint": "Replaces the current revision. A change reason is required.",
+      "create": "Save expense",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "void": "Void expense",
+      "voiding": "Voiding…",
+      "voidHint": "Voiding keeps history and posts compensation. This cannot be undone here.",
+      "required": "Fill in date, amount, account, category, and beneficiary.",
+      "changeReasonRequired": "Enter a change reason to replace this expense.",
+      "voidReasonRequired": "Enter a void reason.",
+      "noteInvalid": "Notes cannot contain line breaks.",
+      "amountPlaceholder": "e.g. 2500",
+      "notePlaceholder": "Optional note",
+      "noAccounts": "No active accounts",
+      "noCategories": "No active categories",
+      "noBeneficiaries": "No active beneficiaries",
+      "errorTitle": "Could not save"
+    },
+    "errors": {
+      "generic": "Something went wrong with this expense.",
+      "invalid": "Check the form values and try again.",
+      "invalidAmount": "Amount must be a whole positive number with no decimals.",
+      "futureDate": "The date cannot be after today for this household.",
+      "dateBeforeOpening": "The date is before the account opening date.",
+      "accountNotActive": "That account is not active.",
+      "categoryNotActive": "That category is not active.",
+      "beneficiaryNotActive": "That beneficiary is not active.",
+      "versionMismatch": "This expense changed elsewhere. Reload and try again.",
+      "idempotency": "A conflicting save was detected. Try again.",
+      "forbidden": "You do not have permission for this action.",
+      "notFound": "That expense was not found."
+    }
   },
   "accounts": {
     "title": "Accounts",
@@ -92,6 +153,7 @@
     "backHome": "Back to dashboard",
     "loading": "Loading…",
     "retry": "Retry",
+    "cancel": "Cancel",
     "offlineOrApi": "The API did not respond. Confirm the Spring server and proxy settings."
   }
 }
