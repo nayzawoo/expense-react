@@ -54,8 +54,10 @@ client helpers, auth route gates, accounts list rendering, the home dashboard
 summary, and period reports.
 
 Smoke e2e uses Playwright against the Vite preview server (Chromium). Specs live
-under `e2e/` and assert the app boots and the login page renders — no credentials
-or live API required. First local run may need `npx playwright install chromium`.
+under `e2e/`. Guest specs assert the app boots to the login page. Authenticated
+specs install route mocks/fixtures for session + dashboard/expenses happy paths —
+no credentials, personal data, or live API. First local run may need
+`npx playwright install chromium`.
 
 ## App routes
 
