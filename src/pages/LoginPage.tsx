@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type SubmitEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LogIn } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -32,7 +32,7 @@ export function LoginPage() {
     return params.get('passwordChanged') === '1' ? t('password.success') : null
   })
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+  async function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     setInfo(null)
     if (!email.trim() || !password) {

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type SubmitEvent } from 'react'
 import { ArrowRightLeft } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -87,7 +87,7 @@ export function TransferForm({
     setValues((prev) => ({ ...prev, [key]: value }))
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     if (mode !== 'create') {
       return

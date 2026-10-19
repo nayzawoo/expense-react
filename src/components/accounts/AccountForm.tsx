@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type SubmitEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type {
@@ -91,7 +91,7 @@ export function AccountForm({
   )
   const [localError, setLocalError] = useState<string | null>(null)
 
-  async function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     setLocalError(null)
 

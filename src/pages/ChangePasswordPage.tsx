@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type SubmitEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { KeyRound } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -26,7 +26,7 @@ export function ChangePasswordPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+  async function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!currentPassword || !newPassword) {
       setError(t('password.required'))

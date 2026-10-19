@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type SubmitEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -25,7 +25,7 @@ export function TemporaryPasswordForm({
   const [temporaryPassword, setTemporaryPassword] = useState('')
   const [localError, setLocalError] = useState<string | null>(null)
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     setLocalError(null)
 
