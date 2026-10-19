@@ -112,3 +112,55 @@ export type DashboardSnapshot = {
   overview: DashboardOverview
   recentActivity: DashboardActivity[]
 }
+
+export type CategoryBreakdownRow = {
+  category: NamedRef
+  amount: string
+  sharePercent: string
+}
+
+export type CategoryChangeRow = {
+  category: NamedRef
+  currentAmount: string
+  previousAmount: string
+  difference: string
+  differencePercent: string | null
+  isNew: boolean
+}
+
+export type CategoryChanges = {
+  increased: CategoryChangeRow[]
+  decreased: CategoryChangeRow[]
+}
+
+export type MonthTrendPoint = {
+  month: string
+  expense: string | null
+  isPartial: boolean
+  coverage: 'COMPLETE' | 'UNCOVERED' | string
+}
+
+export type InsightMetric = {
+  expenseDifferenceAbs: string
+  expenseDifferencePercent: string | null
+}
+
+export type ReportInsight = {
+  kind: 'UP' | 'DOWN' | 'FLAT' | string
+  metric: InsightMetric | null
+  contributors: NamedRef[]
+}
+
+export type AnalyticsSnapshot = {
+  currency: string
+  timeZone: string
+  asOf: string
+  period: ReportPeriod
+  comparisonPeriod: ReportPeriod
+  balanceCoverage: BalanceCoverage
+  overview: DashboardOverview
+  monthlyTrend: MonthTrendPoint[]
+  categoryBreakdown: CategoryBreakdownRow[]
+  categoryChanges: CategoryChanges
+  insight: ReportInsight | null
+}

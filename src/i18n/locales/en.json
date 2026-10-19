@@ -9,6 +9,7 @@
     "accounts": "Accounts",
     "categories": "Categories",
     "beneficiaries": "Beneficiaries",
+    "reports": "Reports",
     "settings": "Settings",
     "login": "Sign in",
     "logout": "Sign out",
@@ -257,6 +258,65 @@
       "conflict": "A beneficiary with that name already exists.",
       "forbidden": "You do not have permission for this action.",
       "notFound": "That beneficiary was not found."
+    }
+  },
+  "reports": {
+    "title": "Reports",
+    "subtitle": "Period totals, trends, and category breakdowns.",
+    "loadError": "Could not load period reports.",
+    "invalidAsOf": "That as-of date is not valid for this household.",
+    "asOfLabel": "As of date",
+    "applyAsOf": "Apply date",
+    "clearAsOf": "Clear",
+    "periodRange": "{{from}} – {{to}}",
+    "asOf": "As of {{date}}",
+    "expense": "Expense",
+    "income": "Income",
+    "net": "Net",
+    "previousAverage": "Prior 5-month avg",
+    "elapsedAverage": "Avg {{amount}} / day so far",
+    "notAvailable": "Not available",
+    "periodTitle": "Reporting periods",
+    "periodHint": "Current month-to-date versus the same span in the prior month.",
+    "currentPeriod": "Current period",
+    "comparisonPeriod": "Comparison period",
+    "coverage": {
+      "complete": "Coverage complete",
+      "incomplete": "Coverage incomplete",
+      "accountOpeningGap": "Incomplete — account opening gap"
+    },
+    "monthlyTrend": "Monthly expense trend",
+    "monthlyTrendHint": "Last six months of household expense totals.",
+    "monthlyTrendEmpty": "No monthly trend points for this period.",
+    "partialMonth": "Partial",
+    "monthCoverage": {
+      "COMPLETE": "Covered",
+      "UNCOVERED": "Uncovered"
+    },
+    "categoryBreakdown": "Category breakdown",
+    "categoryBreakdownHint": "Expense share by category for the current period.",
+    "categoryBreakdownEmpty": "No category breakdown for this period.",
+    "increased": "Categories up",
+    "increasedHint": "Largest spending increases versus the comparison period.",
+    "decreased": "Categories down",
+    "decreasedHint": "Largest spending decreases versus the comparison period.",
+    "changesEmpty": "No category changes to show.",
+    "newCategory": "New",
+    "fields": {
+      "category": "Category",
+      "amount": "Amount",
+      "share": "Share",
+      "current": "Current",
+      "change": "Change"
+    },
+    "insight": {
+      "title": "Period insight",
+      "hint": "High-level change versus the comparison period.",
+      "unavailable": "No comparison insight is available for this period.",
+      "flat": "Spending is about the same as the comparison period.",
+      "up": "Spending is up by {{amount}} ({{percent}}). Top contributors: {{contributors}}.",
+      "down": "Spending is down by {{amount}} ({{percent}}). Top contributors: {{contributors}}.",
+      "noContributors": "none listed"
     }
   },
   "settings": {

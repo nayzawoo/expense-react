@@ -1,6 +1,7 @@
 import type { Category } from '@/api/categories'
 import type {
   Account,
+  AnalyticsSnapshot,
   CurrentUser,
   DashboardSnapshot,
   Household,
@@ -143,6 +144,145 @@ export const sampleDashboard: DashboardSnapshot = {
       },
     },
   ],
+}
+
+export const sampleAnalytics: AnalyticsSnapshot = {
+  currency: 'MMK',
+  timeZone: 'Asia/Yangon',
+  asOf: '2026-10-19',
+  period: {
+    from: '2026-10-01',
+    to: '2026-10-19',
+    coverage: {
+      from: '2026-10-01',
+      to: '2026-10-19',
+      complete: true,
+      reason: null,
+    },
+  },
+  comparisonPeriod: {
+    from: '2026-09-01',
+    to: '2026-09-19',
+    coverage: {
+      from: '2026-09-01',
+      to: '2026-09-19',
+      complete: true,
+      reason: null,
+    },
+  },
+  balanceCoverage: {
+    from: '2026-01-01',
+    complete: true,
+    omittedAccountIds: [],
+  },
+  overview: {
+    expense: '800',
+    income: '1200',
+    net: '400',
+    previousSamePeriodExpense: '500',
+    expenseDifference: '300',
+    expenseDifferencePercent: '60.0',
+    direction: 'UP',
+    previousFiveMonthAverage: '450',
+    elapsedDayAverage: '42',
+  },
+  monthlyTrend: [
+    {
+      month: '2026-05',
+      expense: '400',
+      isPartial: false,
+      coverage: 'COMPLETE',
+    },
+    {
+      month: '2026-06',
+      expense: '420',
+      isPartial: false,
+      coverage: 'COMPLETE',
+    },
+    {
+      month: '2026-07',
+      expense: '390',
+      isPartial: false,
+      coverage: 'COMPLETE',
+    },
+    {
+      month: '2026-08',
+      expense: '510',
+      isPartial: false,
+      coverage: 'COMPLETE',
+    },
+    {
+      month: '2026-09',
+      expense: '530',
+      isPartial: false,
+      coverage: 'COMPLETE',
+    },
+    {
+      month: '2026-10',
+      expense: '800',
+      isPartial: true,
+      coverage: 'COMPLETE',
+    },
+  ],
+  categoryBreakdown: [
+    {
+      category: {
+        id: '66666666-6666-4666-8666-666666666666',
+        name: 'Food',
+      },
+      amount: '500',
+      sharePercent: '62.5',
+    },
+    {
+      category: {
+        id: '77777777-7777-4777-8777-777777777777',
+        name: 'Transport',
+      },
+      amount: '300',
+      sharePercent: '37.5',
+    },
+  ],
+  categoryChanges: {
+    increased: [
+      {
+        category: {
+          id: '66666666-6666-4666-8666-666666666666',
+          name: 'Food',
+        },
+        currentAmount: '500',
+        previousAmount: '200',
+        difference: '300',
+        differencePercent: '150.0',
+        isNew: false,
+      },
+    ],
+    decreased: [
+      {
+        category: {
+          id: '99999999-9999-4999-8999-999999999999',
+          name: 'Bills',
+        },
+        currentAmount: '100',
+        previousAmount: '250',
+        difference: '-150',
+        differencePercent: '-60.0',
+        isNew: false,
+      },
+    ],
+  },
+  insight: {
+    kind: 'UP',
+    metric: {
+      expenseDifferenceAbs: '300',
+      expenseDifferencePercent: '60.0',
+    },
+    contributors: [
+      {
+        id: '66666666-6666-4666-8666-666666666666',
+        name: 'Food',
+      },
+    ],
+  },
 }
 
 export const sampleAccounts: Account[] = [

@@ -48,8 +48,8 @@ Do not commit `.env` or real secrets. `.env.example` is the committed template.
 | `npm run test:watch` | Run Vitest in watch mode |
 
 Tests use Vitest + Testing Library with mocked network calls. They cover API
-client helpers, auth route gates, accounts list rendering, and the home
-dashboard summary.
+client helpers, auth route gates, accounts list rendering, the home dashboard
+summary, and period reports.
 
 ## App routes
 
@@ -60,6 +60,7 @@ dashboard summary.
 | Dashboard | `/` | Household summary from the reports API |
 | Accounts | `/accounts` | Live account list from the API |
 | Expenses | `/expenses` | Posted expenses list and form |
+| Reports | `/reports` | Period analytics from the reports API |
 | Settings | `/settings` | Language + session |
 
 ## API contract used in this slice
@@ -72,6 +73,7 @@ dashboard summary.
 - `GET /api/v1/household`
 - `GET /api/v1/households/{householdId}/accounts`
 - `GET /api/v1/households/{householdId}/reports/dashboard`
+- `GET /api/v1/households/{householdId}/reports/analytics`
 
 Auth is cookie-session based (`expense-session`). Unsafe requests send the CSRF
 header returned by the bootstrap endpoint. After login, password change, or logout,
