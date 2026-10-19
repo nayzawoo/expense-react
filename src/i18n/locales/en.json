@@ -9,6 +9,7 @@
     "accounts": "Accounts",
     "settings": "Settings",
     "login": "Sign in",
+    "logout": "Sign out",
     "menu": "Menu",
     "closeMenu": "Close menu"
   },
@@ -19,36 +20,78 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "subtitle": "A quick view of balances and recent activity.",
-    "placeholder": "Connect an API to load live balances and recent transactions.",
-    "quickAdd": "Add expense"
+    "subtitle": "A quick view of your household and balances.",
+    "greeting": "Signed in as {{name}}",
+    "household": "Household",
+    "currency": "Currency",
+    "timezone": "Timezone",
+    "accountsPreview": "Open accounts",
+    "quickAdd": "Add expense",
+    "signedOutHint": "Sign in to load household data from the API."
   },
   "expenses": {
     "title": "Expenses",
     "subtitle": "Review and record household expenses.",
-    "empty": "No expenses yet. This list will fill in once the API is wired.",
+    "empty": "Expense entry will land in a later slice.",
     "add": "Add expense"
   },
   "accounts": {
     "title": "Accounts",
-    "subtitle": "Cash, cards, and other household balances.",
-    "empty": "No accounts yet. Account management will land in a later slice."
+    "subtitle": "Cash, wallets, and bank balances for this household.",
+    "empty": "No accounts yet.",
+    "name": "Name",
+    "type": "Type",
+    "owner": "Owner",
+    "balance": "Balance",
+    "status": "Status",
+    "asOf": "As of {{date}}",
+    "loadError": "Could not load accounts.",
+    "types": {
+      "BANK": "Bank",
+      "WALLET": "Wallet",
+      "CASH": "Cash"
+    },
+    "statuses": {
+      "ACTIVE": "Active",
+      "ARCHIVED": "Archived"
+    }
   },
   "settings": {
     "title": "Settings",
     "subtitle": "Preferences for this device.",
-    "languageHint": "Choose the interface language. Your choice is remembered on this device."
+    "languageHint": "Choose the interface language. Your choice is remembered on this device.",
+    "session": "Session",
+    "signedInAs": "Signed in as {{name}} ({{email}})",
+    "role": "Role: {{role}}"
   },
   "login": {
     "title": "Sign in",
-    "subtitle": "Authentication will connect to the expense API in a later slice.",
+    "subtitle": "Use your household account for the Spring expense API.",
     "email": "Email",
     "password": "Password",
     "submit": "Sign in",
-    "demoNote": "Scaffold only — sign-in is not wired yet."
+    "submitting": "Signing in…",
+    "invalid": "Email or password is incorrect.",
+    "failed": "Sign-in failed. Check the API connection and try again.",
+    "required": "Enter email and password."
+  },
+  "password": {
+    "title": "Change password",
+    "subtitle": "A password change is required before you can use the app.",
+    "current": "Current password",
+    "next": "New password",
+    "submit": "Update password",
+    "submitting": "Updating…",
+    "success": "Password updated. Sign in again with the new password.",
+    "failed": "Could not update the password.",
+    "tooShort": "New password must be at least 8 characters.",
+    "required": "Fill in both password fields."
   },
   "common": {
     "comingSoon": "Coming soon",
-    "backHome": "Back to dashboard"
+    "backHome": "Back to dashboard",
+    "loading": "Loading…",
+    "retry": "Retry",
+    "offlineOrApi": "The API did not respond. Confirm the Spring server and proxy settings."
   }
 }

@@ -1,7 +1,7 @@
-import { Link } from 'react-router-dom'
-import { PlusCircle, Receipt } from 'lucide-react'
+import { Receipt } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -26,7 +26,6 @@ export function ExpensesPage() {
           </p>
         </div>
         <Button disabled>
-          <PlusCircle data-icon="inline-start" />
           {t('expenses.add')}
         </Button>
       </div>
@@ -40,9 +39,7 @@ export function ExpensesPage() {
           <CardDescription>{t('expenses.empty')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Link to="/" className="text-sm font-medium text-primary underline-offset-4 hover:underline">
-            {t('common.backHome')}
-          </Link>
+          <Badge variant="secondary">{t('common.comingSoon')}</Badge>
         </CardContent>
       </Card>
     </section>
