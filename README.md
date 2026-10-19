@@ -43,6 +43,11 @@ Do not commit `.env` or real secrets. `.env.example` is the committed template.
 | `npm run preview` | Preview the production build |
 | `npm run typecheck` | TypeScript project build check |
 | `npm run lint` | Run oxlint |
+| `npm test` | Run the Vitest suite once |
+| `npm run test:watch` | Run Vitest in watch mode |
+
+Tests use Vitest + Testing Library with mocked network calls. They cover API
+client helpers, auth route gates, and accounts list rendering.
 
 ## App routes
 
