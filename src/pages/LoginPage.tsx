@@ -17,6 +17,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 
 export function LoginPage() {
   const { t } = useTranslation()
@@ -66,7 +67,10 @@ export function LoginPage() {
           </h1>
           <p className="text-sm text-muted-foreground">{t('login.subtitle')}</p>
         </div>
-        <LanguageSwitcher />
+        <div className="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center">
+          <ThemeSwitcher />
+          <LanguageSwitcher />
+        </div>
       </div>
 
       {info ? (

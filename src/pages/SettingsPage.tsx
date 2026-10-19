@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 
 import { useAuth } from '@/auth/useAuth'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -31,6 +32,16 @@ export function SettingsPage() {
         </CardHeader>
         <CardContent>
           <LanguageSwitcher />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('theme.label')}</CardTitle>
+          <CardDescription>{t('settings.themeHint')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ThemeSwitcher showLabels />
         </CardContent>
       </Card>
 
