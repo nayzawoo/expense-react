@@ -165,4 +165,30 @@ describe('api client session invalidation', () => {
     await expect(ensureCsrf()).resolves.toMatchObject({ token: 'new-token' })
     expect(fetchMock).toHaveBeenCalledTimes(3)
   })
+
+  it('does not dispatch a CSRF write after the auth generation changes', async () => {
+    const fetchMock = vi.mocked(fetch)
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ token: 'csrf', headerName: 'X-CSRF-TOKEN' }),
+    )
+    await ensureCsrf()
+    fetchMock.mockClear()
+
+    const pending = expect(
+      apiFetch('/api/v1/households/hh/expenses', {
+        method: 'POST',
+        csrf: true,
+        body: { amount: '10' },
+      }),
+    ).rejects.toBeInstanceOf(TypeError)
+
+    advanceAuthGeneration()
+    await pending
+
+    expect(
+      fetchMock.mock.calls.some((call) =>
+        String(call[0]).includes('/households/hh/expenses'),
+      ),
+    ).toBe(false)
+  })
 })

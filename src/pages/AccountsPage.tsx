@@ -44,6 +44,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { idempotencyClientErrorKey } from '@/lib/idempotency'
 import { formatMoney } from '@/lib/money'
 import { cn } from '@/lib/utils'
 
@@ -55,6 +56,10 @@ const selectClassName = cn(
 type StatusFilter = 'ALL' | AccountStatus
 
 function accountErrorKey(err: unknown): string {
+  const recoveryKey = idempotencyClientErrorKey(err)
+  if (recoveryKey) {
+    return recoveryKey
+  }
   if (err instanceof TypeError) {
     return 'common.offlineOrApi'
   }

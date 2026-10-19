@@ -543,6 +543,9 @@
     "retry": "Retry",
     "cancel": "Cancel",
     "offlineOrApi": "The API did not respond. Confirm the Spring server and proxy settings.",
+    "idempotencyStorage": "This device could not save a retry key for the request. Check site storage, then retry the same values. Confirm the list before submitting different values.",
+    "idempotencyStale": "This unfinished request is older than 7 days and cannot be retried safely. Check whether it already appears in the list before creating it again.",
+    "idempotencyCapacity": "Too many unfinished requests are waiting on this device. Retry one of those first.",
     "toast": {
       "created": "Created successfully.",
       "updated": "Changes saved.",

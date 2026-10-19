@@ -27,6 +27,7 @@ import {
   type AuthStatus,
 } from '@/auth/auth-context'
 import { useQualifyingActivity } from '@/auth/useQualifyingActivity'
+import { setIdempotencyActor } from '@/lib/idempotency'
 
 async function loadHouseholdSafe(): Promise<Household | null> {
   try {
@@ -43,6 +44,10 @@ function generationChanged(generation: number): boolean {
   return generation !== getAuthGeneration()
 }
 
+function rememberActor(user: CurrentUser | null): void {
+  setIdempotencyActor(user?.id ?? null)
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('loading')
   const [user, setUser] = useState<CurrentUser | null>(null)
@@ -52,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const invalidateSession = useCallback(() => {
     advanceAuthGeneration()
     clearCsrf()
+    rememberActor(null)
     setUser(null)
     setHousehold(null)
     setStatus('anonymous')
@@ -78,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (generationChanged(generation)) {
         return
       }
+      rememberActor(nextUser)
       setUser(nextUser)
       setHousehold(nextHousehold)
       setStatus('authenticated')
@@ -86,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (generationChanged(generation)) {
         return
       }
+      rememberActor(null)
       setUser(null)
       setHousehold(null)
       if (isApiError(err) && err.status === 401) {
@@ -115,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (generationChanged(generation)) {
       return
     }
+    rememberActor(nextUser)
     setUser(nextUser)
     setHousehold(nextHousehold)
     setStatus('authenticated')
@@ -130,6 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       advanceAuthGeneration()
       clearCsrf()
+      rememberActor(null)
       setUser(null)
       setHousehold(null)
       setStatus('anonymous')
@@ -151,6 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       advanceAuthGeneration()
       clearCsrf()
+      rememberActor(null)
       setUser(null)
       setHousehold(null)
       setStatus('anonymous')

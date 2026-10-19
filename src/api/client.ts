@@ -162,6 +162,10 @@ export async function apiFetch<T>(
     headers.set(token.headerName, token.token)
   }
 
+  if (csrf && requestGeneration !== authGeneration) {
+    throw new TypeError('Session changed before request was sent')
+  }
+
   const response = await fetch(apiUrl(path), {
     ...rest,
     credentials: 'include',

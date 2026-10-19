@@ -4,10 +4,12 @@ import { cleanup } from '@testing-library/react'
 
 import i18n from '@/i18n'
 import { resetAuthClientForTests } from '@/api/client'
+import { resetIdempotencyForTests } from '@/lib/idempotency'
 
 afterEach(() => {
   cleanup()
   resetAuthClientForTests()
+  resetIdempotencyForTests()
   void i18n.changeLanguage('en')
 })
 

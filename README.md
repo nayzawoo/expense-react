@@ -69,6 +69,13 @@ specs install route mocks/fixtures for session + dashboard/expenses happy paths 
 no credentials, personal data, or live API. First local run may need
 `npx playwright install chromium`.
 
+Same-tab reload can recover an unfinished financial create, replace, or void by
+reusing the original `Idempotency-Key`. Recovery metadata lives in
+`sessionStorage` (opaque key, SHA-256 digests, schema, timestamp) and is valid
+for at most seven days to match the API idempotency window. Closing the tab or
+clearing site data ends that guarantee. Monetary amounts, notes, and credentials
+are not stored.
+
 ## App routes
 
 | Area | Path | Notes |

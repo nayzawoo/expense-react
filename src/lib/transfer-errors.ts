@@ -1,7 +1,12 @@
 import { isApiError } from '@/api/errors'
+import { idempotencyClientErrorKey } from '@/lib/idempotency'
 
 /** Map Spring transfer reason strings / statuses to i18n keys under `transfers.errors.*`. */
 export function transferErrorKey(error: unknown): string {
+  const recoveryKey = idempotencyClientErrorKey(error)
+  if (recoveryKey) {
+    return recoveryKey
+  }
   if (error instanceof TypeError) {
     return 'common.offlineOrApi'
   }
