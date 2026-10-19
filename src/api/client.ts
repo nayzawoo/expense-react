@@ -7,6 +7,24 @@ type CsrfState = CsrfBootstrap | null
 let csrfState: CsrfState = null
 let csrfInFlight: Promise<CsrfBootstrap> | null = null
 
+type UnauthorizedHandler = (detail: { path: string }) => void
+let unauthorizedHandler: UnauthorizedHandler | null = null
+
+/**
+ * Paths where HTTP 401 means bad credentials / challenge failure, not a dead session.
+ * Do not clear the client auth snapshot for these.
+ */
+const CREDENTIAL_401_PATHS = new Set([
+  '/api/v1/auth/login',
+  '/api/v1/password',
+])
+
+export function setUnauthorizedHandler(
+  handler: UnauthorizedHandler | null,
+): void {
+  unauthorizedHandler = handler
+}
+
 export function clearCsrf(): void {
   csrfState = null
   csrfInFlight = null
@@ -41,6 +59,18 @@ async function readError(response: Response): Promise<ApiError> {
   return new ApiError(response.status, message, code)
 }
 
+function normalizeApiPath(path: string): string {
+  try {
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return new URL(path).pathname
+    }
+  } catch {
+    // fall through
+  }
+  const q = path.indexOf('?')
+  return q === -1 ? path : path.slice(0, q)
+}
+
 export async function ensureCsrf(): Promise<CsrfBootstrap> {
   if (csrfState) {
     return csrfState
@@ -71,13 +101,21 @@ type ApiFetchOptions = Omit<RequestInit, 'body'> & {
   body?: unknown
   csrf?: boolean
   headers?: HeadersInit
+  /** Skip session-invalidation side effects (rare; prefer default). */
+  ignoreUnauthorized?: boolean
 }
 
 export async function apiFetch<T>(
   path: string,
   options: ApiFetchOptions = {},
 ): Promise<T> {
-  const { body, csrf = false, headers: initHeaders, ...rest } = options
+  const {
+    body,
+    csrf = false,
+    headers: initHeaders,
+    ignoreUnauthorized = false,
+    ...rest
+  } = options
   const headers = new Headers(initHeaders)
   headers.set('Accept', 'application/json')
 
@@ -100,6 +138,13 @@ export async function apiFetch<T>(
   if (!response.ok) {
     if (response.status === 403 && csrf) {
       clearCsrf()
+    }
+    if (response.status === 401 && !ignoreUnauthorized) {
+      const normalized = normalizeApiPath(path)
+      if (!CREDENTIAL_401_PATHS.has(normalized)) {
+        clearCsrf()
+        unauthorizedHandler?.({ path: normalized })
+      }
     }
     throw await readError(response)
   }

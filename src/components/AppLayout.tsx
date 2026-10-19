@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { LogOut, Menu } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
 import { useAuth } from '@/auth/useAuth'
 import { AppSidebarNav } from '@/components/AppSidebarNav'
@@ -24,6 +25,14 @@ export function AppLayout() {
   const { user, logout } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const showNav = !user?.mustChangePassword
+
+  function handleLogout() {
+    void logout().catch((err: unknown) => {
+      toast.error(
+        err instanceof Error ? err.message : t('settings.logoutFailed'),
+      )
+    })
+  }
 
   useEffect(() => {
     const lang = (i18n.resolvedLanguage ?? i18n.language).startsWith('my')
@@ -62,7 +71,7 @@ export function AppLayout() {
                     variant="outline"
                     onClick={() => {
                       setMenuOpen(false)
-                      void logout()
+                      handleLogout()
                     }}
                   >
                     <LogOut data-icon="inline-start" />
@@ -104,7 +113,7 @@ export function AppLayout() {
               type="button"
               className={cn(buttonVariants({ variant: 'outline' }), 'justify-center')}
               onClick={() => {
-                void logout()
+                handleLogout()
               }}
             >
               <LogOut data-icon="inline-start" />

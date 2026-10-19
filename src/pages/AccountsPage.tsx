@@ -1,17 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Archive, Pencil, PlusCircle, Wallet } from 'lucide-react'
+import { PlusCircle, Wallet } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import {
   createAccount,
   listAccounts,
-  updateAccount,
-  updateAccountStatus,
   type Account,
   type AccountStatus,
   type CreateAccountInput,
-  type UpdateAccountInput,
 } from '@/api/accounts'
 import { isApiError } from '@/api/errors'
 import { useAuth } from '@/auth/useAuth'
@@ -55,7 +52,6 @@ const selectClassName = cn(
   'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm',
 )
 
-type SheetMode = 'create' | 'edit'
 type StatusFilter = 'ALL' | AccountStatus
 
 function accountErrorKey(err: unknown): string {
@@ -100,11 +96,8 @@ export function AccountsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
 
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [sheetMode, setSheetMode] = useState<SheetMode>('create')
-  const [selected, setSelected] = useState<Account | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  const [statusBusyId, setStatusBusyId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     if (!household) {
@@ -117,7 +110,8 @@ export function AccountsPage() {
     setLoading(true)
     setError(null)
     try {
-      const rows = await listAccounts(household.id, statusFilter)
+      // Spring list has no status query — filter client-side.
+      const rows = await listAccounts(household.id)
       setAccounts(rows)
     } catch (err) {
       setAccounts(null)
@@ -129,11 +123,21 @@ export function AccountsPage() {
     } finally {
       setLoading(false)
     }
-  }, [household, statusFilter, t])
+  }, [household, t])
 
   useEffect(() => {
     void load()
   }, [load])
+
+  const visibleAccounts = useMemo(() => {
+    if (!accounts) {
+      return null
+    }
+    if (statusFilter === 'ALL') {
+      return accounts
+    }
+    return accounts.filter((row) => row.status === statusFilter)
+  }, [accounts, statusFilter])
 
   const nextSortOrder = useMemo(() => {
     if (!accounts || accounts.length === 0) {
@@ -143,22 +147,11 @@ export function AccountsPage() {
   }, [accounts])
 
   function openCreate() {
-    setSheetMode('create')
-    setSelected(null)
     setFormError(null)
     setSheetOpen(true)
   }
 
-  function openEdit(account: Account) {
-    setSheetMode('edit')
-    setSelected(account)
-    setFormError(null)
-    setSheetOpen(true)
-  }
-
-  async function handleSubmit(
-    values: AccountFormValues | UpdateAccountInput,
-  ) {
+  async function handleSubmit(values: AccountFormValues | CreateAccountInput) {
     if (!household) {
       setFormError(t('accounts.loadError'))
       return
@@ -167,50 +160,14 @@ export function AccountsPage() {
     setSubmitting(true)
     setFormError(null)
     try {
-      if (sheetMode === 'create') {
-        await createAccount(household.id, values as CreateAccountInput)
-        toast.success(t('common.toast.created'))
-      } else if (selected) {
-        await updateAccount(
-          household.id,
-          selected.id,
-          values as UpdateAccountInput,
-        )
-        toast.success(t('common.toast.updated'))
-      }
+      await createAccount(household.id, values as CreateAccountInput)
+      toast.success(t('common.toast.created'))
       setSheetOpen(false)
       await load()
     } catch (err) {
       setFormError(t(accountErrorKey(err)))
     } finally {
       setSubmitting(false)
-    }
-  }
-
-  async function handleToggleStatus(account: Account) {
-    if (!household || !isAdmin) {
-      return
-    }
-
-    const nextStatus: AccountStatus =
-      account.status === 'ACTIVE' ? 'ARCHIVED' : 'ACTIVE'
-
-    setStatusBusyId(account.id)
-    setError(null)
-    try {
-      await updateAccountStatus(household.id, account.id, nextStatus)
-      toast.success(
-        t(
-          nextStatus === 'ARCHIVED'
-            ? 'common.toast.archived'
-            : 'common.toast.reactivated',
-        ),
-      )
-      await load()
-    } catch (err) {
-      setError(t(accountErrorKey(err)))
-    } finally {
-      setStatusBusyId(null)
     }
   }
 
@@ -279,7 +236,7 @@ export function AccountsPage() {
         <CardContent>
           {loading ? (
             <PageLoading />
-          ) : accounts && accounts.length > 0 ? (
+          ) : visibleAccounts && visibleAccounts.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -288,13 +245,10 @@ export function AccountsPage() {
                   <TableHead>{t('accounts.fields.owner')}</TableHead>
                   <TableHead>{t('accounts.fields.balance')}</TableHead>
                   <TableHead>{t('accounts.fields.status')}</TableHead>
-                  {isAdmin ? (
-                    <TableHead>{t('accounts.fields.actions')}</TableHead>
-                  ) : null}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {accounts.map((account) => (
+                {visibleAccounts.map((account) => (
                   <TableRow key={account.id}>
                     <TableCell>
                       <div className="font-medium">{account.name}</div>
@@ -328,31 +282,6 @@ export function AccountsPage() {
                         })}
                       </Badge>
                     </TableCell>
-                    {isAdmin ? (
-                      <TableCell>
-                        <div className="flex flex-wrap gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => openEdit(account)}
-                          >
-                            <Pencil data-icon="inline-start" />
-                            {t('accounts.edit')}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={statusBusyId === account.id}
-                            onClick={() => void handleToggleStatus(account)}
-                          >
-                            <Archive data-icon="inline-start" />
-                            {account.status === 'ACTIVE'
-                              ? t('accounts.archive')
-                              : t('accounts.reactivate')}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    ) : null}
                   </TableRow>
                 ))}
               </TableBody>
@@ -366,29 +295,22 @@ export function AccountsPage() {
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent className="overflow-y-auto sm:max-w-md">
           <SheetHeader>
-            <SheetTitle>
-              {sheetMode === 'create'
-                ? t('accounts.form.createTitle')
-                : t('accounts.form.editTitle')}
-            </SheetTitle>
-            <SheetDescription>
-              {sheetMode === 'create'
-                ? t('accounts.form.createHint')
-                : t('accounts.form.editHint')}
-            </SheetDescription>
+            <SheetTitle>{t('accounts.form.createTitle')}</SheetTitle>
+            <SheetDescription>{t('accounts.form.createHint')}</SheetDescription>
           </SheetHeader>
           <div className="px-4 pb-4">
-            <AccountForm
-              key={`${sheetMode}-${selected?.id ?? 'new'}-${sheetOpen}`}
-              mode={sheetMode}
-              account={selected}
-              defaultSortOrder={nextSortOrder}
-              currency={household?.currency ?? 'MMK'}
-              submitting={submitting}
-              error={formError}
-              onSubmit={handleSubmit}
-              onCancel={() => setSheetOpen(false)}
-            />
+            {household ? (
+              <AccountForm
+                key={`create-${sheetOpen}`}
+                defaultSortOrder={nextSortOrder}
+                currency={household.currency}
+                timeZone={household.timezone}
+                submitting={submitting}
+                error={formError}
+                onSubmit={handleSubmit}
+                onCancel={() => setSheetOpen(false)}
+              />
+            ) : null}
           </div>
         </SheetContent>
       </Sheet>

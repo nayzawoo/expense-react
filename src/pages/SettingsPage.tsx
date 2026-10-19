@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
 import { useAuth } from '@/auth/useAuth'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
@@ -14,7 +16,22 @@ import {
 
 export function SettingsPage() {
   const { t } = useTranslation()
-  const { user, logout } = useAuth()
+  const { user, logout, error, clearError } = useAuth()
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  async function handleLogout() {
+    clearError()
+    setLoggingOut(true)
+    try {
+      await logout()
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : t('settings.logoutFailed'),
+      )
+    } finally {
+      setLoggingOut(false)
+    }
+  }
 
   return (
     <section className="grid gap-4">
@@ -65,12 +82,18 @@ export function SettingsPage() {
           ) : null}
           <Button
             variant="outline"
+            disabled={loggingOut}
             onClick={() => {
-              void logout()
+              void handleLogout()
             }}
           >
-            {t('nav.logout')}
+            {loggingOut ? t('settings.loggingOut') : t('nav.logout')}
           </Button>
+          {error ? (
+            <p className="w-full text-sm text-destructive" role="alert">
+              {error}
+            </p>
+          ) : null}
         </CardContent>
       </Card>
     </section>

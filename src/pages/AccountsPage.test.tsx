@@ -16,8 +16,6 @@ import { renderWithProviders } from '@/test/render'
 const useAuthMock = vi.fn()
 const listAccountsMock = vi.fn()
 const createAccountMock = vi.fn()
-const updateAccountMock = vi.fn()
-const updateAccountStatusMock = vi.fn()
 
 vi.mock('@/auth/useAuth', () => ({
   useAuth: () => useAuthMock(),
@@ -31,9 +29,6 @@ vi.mock('@/api/accounts', async () => {
     ...actual,
     listAccounts: (...args: unknown[]) => listAccountsMock(...args),
     createAccount: (...args: unknown[]) => createAccountMock(...args),
-    updateAccount: (...args: unknown[]) => updateAccountMock(...args),
-    updateAccountStatus: (...args: unknown[]) =>
-      updateAccountStatusMock(...args),
   }
 })
 
@@ -57,8 +52,6 @@ describe('AccountsPage', () => {
     useAuthMock.mockReset()
     listAccountsMock.mockReset()
     createAccountMock.mockReset()
-    updateAccountMock.mockReset()
-    updateAccountStatusMock.mockReset()
   })
 
   it('renders household accounts from the API for members', async () => {
@@ -73,7 +66,9 @@ describe('AccountsPage', () => {
     expect(screen.getAllByText('Cash').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Wallet').length).toBeGreaterThan(0)
     expect(screen.queryByRole('button', { name: 'Add account' })).toBeNull()
-    expect(listAccountsMock).toHaveBeenCalledWith(sampleHousehold.id, 'ALL')
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Archive' })).toBeNull()
+    expect(listAccountsMock).toHaveBeenCalledWith(sampleHousehold.id)
   })
 
   it('lets admins create an account', async () => {
@@ -155,34 +150,21 @@ describe('AccountsPage', () => {
     expect((await screen.findAllByText('Savings')).length).toBeGreaterThan(0)
   })
 
-  it('lets admins archive an account', async () => {
+  it('filters archived accounts client-side without a status query', async () => {
     const user = userEvent.setup()
-    useAuthMock.mockReturnValue(authValue({ user: sampleAdmin }))
-    listAccountsMock
-      .mockResolvedValueOnce(sampleAccounts)
-      .mockResolvedValueOnce([
-        { ...sampleAccounts[0], status: 'ARCHIVED', version: 1 },
-        sampleAccounts[1],
-      ])
-    updateAccountStatusMock.mockResolvedValue({
-      ...sampleAccounts[0],
-      status: 'ARCHIVED',
-      version: 1,
-    })
+    useAuthMock.mockReturnValue(authValue())
+    listAccountsMock.mockResolvedValue([
+      sampleAccounts[0],
+      { ...sampleAccounts[1], status: 'ARCHIVED' },
+    ])
 
     renderWithProviders(<AccountsPage />)
 
     expect(await screen.findByText('1,250 MMK')).toBeInTheDocument()
-    const archiveButtons = screen.getAllByRole('button', { name: 'Archive' })
-    await user.click(archiveButtons[0])
-
-    await waitFor(() => {
-      expect(updateAccountStatusMock).toHaveBeenCalledWith(
-        sampleHousehold.id,
-        sampleAccounts[0].id,
-        'ARCHIVED',
-      )
-    })
+    await user.selectOptions(screen.getByLabelText('Status'), 'ARCHIVED')
+    expect(await screen.findByText('-50 MMK')).toBeInTheDocument()
+    expect(screen.queryByText('1,250 MMK')).toBeNull()
+    expect(listAccountsMock).toHaveBeenCalledWith(sampleHousehold.id)
   })
 
   it('shows the empty state when there are no accounts', async () => {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
 import {
   changePassword as changePasswordRequest,
@@ -6,6 +6,7 @@ import {
   login as loginRequest,
   logout as logoutRequest,
 } from '@/api/auth'
+import { clearCsrf, setUnauthorizedHandler } from '@/api/client'
 import { isApiError } from '@/api/errors'
 import { fetchHousehold } from '@/api/household'
 import type { CurrentUser, Household } from '@/api/types'
@@ -14,6 +15,7 @@ import {
   type AuthContextValue,
   type AuthStatus,
 } from '@/auth/auth-context'
+import { useQualifyingActivity } from '@/auth/useQualifyingActivity'
 
 async function loadHouseholdSafe(): Promise<Household | null> {
   try {
@@ -31,19 +33,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<CurrentUser | null>(null)
   const [household, setHousehold] = useState<Household | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const sessionEpoch = useRef(0)
+
+  const invalidateSession = useCallback(() => {
+    sessionEpoch.current += 1
+    clearCsrf()
+    setUser(null)
+    setHousehold(null)
+    setStatus('anonymous')
+    setError(null)
+  }, [])
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      invalidateSession()
+    })
+    return () => setUnauthorizedHandler(null)
+  }, [invalidateSession])
 
   const refreshSession = useCallback(async () => {
+    const epoch = sessionEpoch.current
     try {
       const nextUser = await fetchCurrentUser()
+      if (epoch !== sessionEpoch.current) {
+        return
+      }
       setUser(nextUser)
       if (nextUser.mustChangePassword) {
         setHousehold(null)
       } else {
         setHousehold(await loadHouseholdSafe())
       }
+      if (epoch !== sessionEpoch.current) {
+        return
+      }
       setStatus('authenticated')
       setError(null)
     } catch (err) {
+      if (epoch !== sessionEpoch.current) {
+        return
+      }
       setUser(null)
       setHousehold(null)
       if (isApiError(err) && err.status === 401) {
@@ -57,7 +86,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    // Bootstrap the Spring session once on mount.
     void refreshSession()
   }, [refreshSession])
 
@@ -76,23 +104,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     try {
       await logoutRequest()
-    } finally {
+      clearCsrf()
       setUser(null)
       setHousehold(null)
       setStatus('anonymous')
       setError(null)
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Logout failed — session may still be active'
+      setError(message)
+      throw err instanceof Error ? err : new Error(message)
     }
   }, [])
 
   const changePassword = useCallback(
     async (currentPassword: string, newPassword: string) => {
       await changePasswordRequest(currentPassword, newPassword)
+      clearCsrf()
       setUser(null)
       setHousehold(null)
       setStatus('anonymous')
       setError(null)
     },
     [],
+  )
+
+  useQualifyingActivity(
+    status === 'authenticated' && Boolean(user) && !user?.mustChangePassword,
   )
 
   const value = useMemo<AuthContextValue>(

@@ -509,7 +509,9 @@
     "themeHint": "Choose light, dark, or follow the system appearance. Your choice is remembered on this device.",
     "session": "Session",
     "signedInAs": "Signed in as {{name}} ({{email}})",
-    "role": "Role: {{role}}"
+    "role": "Role: {{role}}",
+    "loggingOut": "Signing out…",
+    "logoutFailed": "Sign-out failed. Your server session may still be active — try again."
   },
   "login": {
     "title": "Sign in",

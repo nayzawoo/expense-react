@@ -488,6 +488,7 @@ export function ExpensesPage() {
               categories={categories}
               beneficiaries={beneficiaries}
               currency={currency}
+              timeZone={household?.timezone ?? 'UTC'}
               submitting={submitting}
               error={formError}
               onSubmit={handleSubmit}
