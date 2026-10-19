@@ -13,7 +13,11 @@
       }
     },
     {
-      "files": ["src/auth/**/*.{ts,tsx}", "src/pages/**/*.{ts,tsx}"],
+      "files": [
+        "src/auth/**/*.{ts,tsx}",
+        "src/pages/**/*.{ts,tsx}",
+        "src/theme/**/*.{ts,tsx}"
+      ],
       "rules": {
         "react/set-state-in-effect": "off"
       }
