@@ -41,3 +41,74 @@ export type Account = {
   version: number
   currency: string
 }
+
+export type NamedRef = {
+  id: string
+  name: string
+}
+
+export type PeriodCoverage = {
+  from: string
+  to: string
+  complete: boolean
+  reason: string | null
+}
+
+export type ReportPeriod = {
+  from: string
+  to: string
+  coverage: PeriodCoverage
+}
+
+export type BalanceCoverage = {
+  from: string
+  complete: boolean
+  omittedAccountIds: string[]
+}
+
+export type DashboardOverview = {
+  expense: string
+  income: string
+  net: string
+  previousSamePeriodExpense: string | null
+  expenseDifference: string | null
+  expenseDifferencePercent: string | null
+  direction: string | null
+  previousFiveMonthAverage: string | null
+  elapsedDayAverage: string | null
+}
+
+export type DashboardAccountBalance = {
+  id: string
+  name: string
+  balance: string
+  negativeBalanceWarning: boolean
+}
+
+export type DashboardActivityKind = 'EXPENSE' | 'INCOME' | 'TRANSFER' | string
+
+export type DashboardActivity = {
+  id: string
+  kind: DashboardActivityKind
+  effectiveDate: string
+  amount: string
+  currency: string
+  note: string | null
+  recordedAt: string
+  account: NamedRef | null
+  sourceAccount: NamedRef | null
+  destinationAccount: NamedRef | null
+}
+
+export type DashboardSnapshot = {
+  currency: string
+  timeZone: string
+  asOf: string
+  period: ReportPeriod
+  comparisonPeriod: ReportPeriod
+  balanceCoverage: BalanceCoverage
+  totalBalance: string
+  accounts: DashboardAccountBalance[]
+  overview: DashboardOverview
+  recentActivity: DashboardActivity[]
+}
