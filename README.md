@@ -9,6 +9,7 @@ React browser client for the Spring household expense API.
 - shadcn/ui (Nova) + Lucide icons
 - React Router
 - i18next (`en` / `my`) with localStorage language preference
+- Light / dark / system theme (`expense_theme` in localStorage; `dark` class on `html`)
 - Session + CSRF calls to the Spring API (`credentials: 'include'`)
 
 ## Quick start

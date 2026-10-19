@@ -18,6 +18,12 @@
     "en": "English",
     "my": "မြန်မာ"
   },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
   "dashboard": {
     "title": "Dashboard",
     "subtitle": "A quick view of your household and balances.",
@@ -121,6 +127,7 @@
     "title": "Settings",
     "subtitle": "Preferences for this device.",
     "languageHint": "Choose the interface language. Your choice is remembered on this device.",
+    "themeHint": "Choose light, dark, or follow the system appearance. Your choice is remembered on this device.",
     "session": "Session",
     "signedInAs": "Signed in as {{name}} ({{email}})",
     "role": "Role: {{role}}"
