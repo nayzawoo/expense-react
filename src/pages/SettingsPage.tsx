@@ -1,0 +1,35 @@
+import { useTranslation } from 'react-i18next'
+
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+
+export function SettingsPage() {
+  const { t } = useTranslation()
+
+  return (
+    <section className="grid gap-4">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {t('settings.title')}
+        </h1>
+        <p className="text-sm text-muted-foreground">{t('settings.subtitle')}</p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('language.label')}</CardTitle>
+          <CardDescription>{t('settings.languageHint')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <LanguageSwitcher />
+        </CardContent>
+      </Card>
+    </section>
+  )
+}
