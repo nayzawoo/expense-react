@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import {
+  ArrowRightLeft,
   LayoutDashboard,
   Receipt,
   Settings,
@@ -15,6 +16,12 @@ import { cn } from '@/lib/utils'
 const navItems = [
   { to: '/', end: true, icon: LayoutDashboard, labelKey: 'nav.dashboard' },
   { to: '/expenses', end: false, icon: Receipt, labelKey: 'nav.expenses' },
+  {
+    to: '/transfers',
+    end: false,
+    icon: ArrowRightLeft,
+    labelKey: 'nav.transfers',
+  },
   { to: '/accounts', end: false, icon: Wallet, labelKey: 'nav.accounts' },
   { to: '/categories', end: false, icon: Tags, labelKey: 'nav.categories' },
   {

@@ -6,6 +6,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "expenses": "Expenses",
+    "transfers": "Transfers",
     "accounts": "Accounts",
     "categories": "Categories",
     "beneficiaries": "Beneficiaries",
@@ -123,6 +124,67 @@
       "idempotency": "A conflicting save was detected. Try again.",
       "forbidden": "You do not have permission for this action.",
       "notFound": "That expense was not found."
+    }
+  },
+  "transfers": {
+    "title": "Transfers",
+    "subtitle": "Move money between household accounts.",
+    "empty": "No posted transfers yet.",
+    "add": "Add transfer",
+    "view": "View",
+    "readOnly": "View only",
+    "loadError": "Could not load transfers.",
+    "fields": {
+      "date": "Date",
+      "amount": "Amount",
+      "sourceAccount": "From",
+      "destinationAccount": "To",
+      "route": "Route",
+      "note": "Note",
+      "voidReason": "Void reason",
+      "actions": "Actions"
+    },
+    "filters": {
+      "title": "Filters",
+      "hint": "Narrow the posted transfer list on this device.",
+      "search": "Search",
+      "searchPlaceholder": "Note, account…",
+      "allAccounts": "All accounts",
+      "from": "From date",
+      "to": "To date",
+      "none": "No transfers match these filters."
+    },
+    "form": {
+      "createTitle": "Add transfer",
+      "detailTitle": "Transfer details",
+      "createHint": "Creates equal-and-opposite postings on source and destination accounts. Transfers cannot be edited after posting.",
+      "detailHint": "Posted transfers have no replace route. Creator or admin may void.",
+      "create": "Save transfer",
+      "saving": "Saving…",
+      "void": "Void transfer",
+      "voiding": "Voiding…",
+      "voidHint": "Voiding keeps history and posts compensation. This cannot be undone here.",
+      "required": "Fill in date, amount, source, and destination.",
+      "voidReasonRequired": "Enter a void reason.",
+      "voidReasonInvalid": "Void reasons cannot contain line breaks.",
+      "noteInvalid": "Notes cannot contain line breaks.",
+      "amountPlaceholder": "e.g. 2500",
+      "notePlaceholder": "Optional note",
+      "needTwoAccounts": "Need at least two active accounts",
+      "errorTitle": "Could not save"
+    },
+    "errors": {
+      "generic": "Something went wrong with this transfer.",
+      "invalid": "Check the form values and try again.",
+      "invalidAmount": "Amount must be a whole positive number with no decimals.",
+      "selfTransfer": "Source and destination must be different accounts.",
+      "futureDate": "The date cannot be after today for this household.",
+      "dateBeforeOpening": "The date is before an account opening date.",
+      "accountNotActive": "That account is not active.",
+      "versionMismatch": "This transfer changed elsewhere. Reload and try again.",
+      "idempotency": "A conflicting save was detected. Try again.",
+      "forbidden": "You do not have permission for this action.",
+      "notFound": "That transfer was not found."
     }
   },
   "accounts": {

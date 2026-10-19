@@ -60,6 +60,7 @@ dashboard summary.
 | Dashboard | `/` | Household summary from the reports API |
 | Accounts | `/accounts` | Live account list from the API |
 | Expenses | `/expenses` | Posted expenses list and form |
+| Transfers | `/transfers` | Account-to-account moves (create / void) |
 | Settings | `/settings` | Language + session |
 
 ## API contract used in this slice
@@ -71,6 +72,9 @@ dashboard summary.
 - `PUT /api/v1/password`
 - `GET /api/v1/household`
 - `GET /api/v1/households/{householdId}/accounts`
+- `GET /api/v1/households/{householdId}/transfers`
+- `POST /api/v1/households/{householdId}/transfers`
+- `POST /api/v1/households/{householdId}/transfers/{transferId}/void`
 - `GET /api/v1/households/{householdId}/reports/dashboard`
 
 Auth is cookie-session based (`expense-session`). Unsafe requests send the CSRF
