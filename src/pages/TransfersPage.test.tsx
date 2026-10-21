@@ -137,6 +137,10 @@ describe('TransfersPage', () => {
     await screen.findByText('Move to wallet')
     await user.click(screen.getByRole('button', { name: 'Add transfer' }))
 
+    const dialog = await screen.findByRole('dialog', { name: 'Add transfer' })
+    expect(dialog).toHaveAttribute('data-slot', 'dialog-content')
+    expect(document.querySelector('[data-slot="sheet-content"]')).toBeNull()
+
     const amount = await screen.findByLabelText(/Amount/)
     await user.clear(amount)
     await user.type(amount, '250')
@@ -174,6 +178,12 @@ describe('TransfersPage', () => {
 
     await screen.findByText('Move to wallet')
     await user.click(screen.getByRole('button', { name: 'View' }))
+
+    const detail = await screen.findByRole('dialog', {
+      name: 'Transfer details',
+    })
+    expect(detail).toHaveAttribute('data-slot', 'dialog-content')
+    expect(document.querySelector('[data-slot="sheet-content"]')).toBeNull()
 
     const reason = await screen.findByLabelText('Void reason')
     await user.type(reason, 'Entered twice')

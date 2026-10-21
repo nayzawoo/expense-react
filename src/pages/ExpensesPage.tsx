@@ -32,14 +32,14 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
 import {
   Table,
   TableBody,
@@ -57,7 +57,7 @@ const selectClassName = cn(
   'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm',
 )
 
-type SheetMode = 'create' | 'edit'
+type FormMode = 'create' | 'edit'
 
 export function ExpensesPage() {
   const { t } = useTranslation()
@@ -76,8 +76,8 @@ export function ExpensesPage() {
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
 
-  const [sheetOpen, setSheetOpen] = useState(false)
-  const [sheetMode, setSheetMode] = useState<SheetMode>('create')
+  const [formOpen, setFormOpen] = useState(false)
+  const [formMode, setFormMode] = useState<FormMode>('create')
   const [selected, setSelected] = useState<Expense | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -154,29 +154,44 @@ export function ExpensesPage() {
   }, [expenses, query, accountFilter, categoryFilter, fromDate, toDate])
 
   function openCreate() {
-    setSheetMode('create')
+    setFormMode('create')
     setSelected(null)
     setFormError(null)
-    setSheetOpen(true)
+    setFormOpen(true)
   }
 
   function openEdit(expense: Expense) {
     if (!expense.capabilities.canReplace && !expense.capabilities.canVoid) {
       return
     }
-    setSheetMode('edit')
+    setFormMode('edit')
     setSelected(expense)
     setFormError(null)
-    setSheetOpen(true)
+    setFormOpen(true)
   }
 
-  function closeSheet() {
+  function closeForm() {
     if (submitting) {
       return
     }
-    setSheetOpen(false)
+    setFormOpen(false)
     setSelected(null)
     setFormError(null)
+  }
+
+  function handleFormOpenChange(
+    open: boolean,
+    details?: { cancel: () => void },
+  ) {
+    if (open) {
+      setFormOpen(true)
+      return
+    }
+    if (submitting) {
+      details?.cancel()
+      return
+    }
+    closeForm()
   }
 
   async function handleSubmit(values: ExpenseFormValues) {
@@ -188,7 +203,7 @@ export function ExpensesPage() {
     setSubmitting(true)
     setFormError(null)
     try {
-      if (sheetMode === 'create') {
+      if (formMode === 'create') {
         await createExpense(household.id, {
           effectiveDate: values.effectiveDate,
           amount: values.amount,
@@ -215,7 +230,7 @@ export function ExpensesPage() {
         )
         toast.success(t('common.toast.updated'))
       }
-      setSheetOpen(false)
+      setFormOpen(false)
       setSelected(null)
       await load()
     } catch (err) {
@@ -238,7 +253,7 @@ export function ExpensesPage() {
         reason,
       })
       toast.success(t('common.toast.voided'))
-      setSheetOpen(false)
+      setFormOpen(false)
       setSelected(null)
       await load()
     } catch (err) {
@@ -454,54 +469,52 @@ export function ExpensesPage() {
         </CardContent>
       </Card>
 
-      <Sheet
-        open={sheetOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            closeSheet()
-          }
-        }}
+      <Dialog
+        open={formOpen}
+        disablePointerDismissal={submitting}
+        onOpenChange={handleFormOpenChange}
       >
-        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
-          <SheetHeader>
-            <SheetTitle>
-              {sheetMode === 'create'
+        <DialogContent
+          className="sm:max-w-md"
+          showCloseButton={!submitting}
+        >
+          <DialogHeader>
+            <DialogTitle>
+              {formMode === 'create'
                 ? t('expenses.form.createTitle')
                 : t('expenses.form.editTitle')}
-            </SheetTitle>
-            <SheetDescription>
-              {sheetMode === 'create'
+            </DialogTitle>
+            <DialogDescription>
+              {formMode === 'create'
                 ? t('expenses.form.createHint')
                 : t('expenses.form.editHint')}
-            </SheetDescription>
-          </SheetHeader>
-          <div className="px-4 pb-4">
-            <ExpenseForm
-              key={
-                sheetMode === 'edit' && selected
-                  ? `edit-${selected.id}-${selected.version}`
-                  : `create-${accounts.length}-${categories.length}-${beneficiaries.length}`
-              }
-              mode={sheetMode}
-              expense={selected}
-              accounts={accounts}
-              categories={categories}
-              beneficiaries={beneficiaries}
-              currency={currency}
-              timeZone={household?.timezone ?? 'UTC'}
-              submitting={submitting}
-              error={formError}
-              onSubmit={handleSubmit}
-              onCancel={closeSheet}
-              onVoid={
-                sheetMode === 'edit' && selected?.capabilities.canVoid
-                  ? handleVoid
-                  : undefined
-              }
-            />
-          </div>
-        </SheetContent>
-      </Sheet>
+            </DialogDescription>
+          </DialogHeader>
+          <ExpenseForm
+            key={
+              formMode === 'edit' && selected
+                ? `edit-${selected.id}-${selected.version}`
+                : `create-${accounts.length}-${categories.length}-${beneficiaries.length}`
+            }
+            mode={formMode}
+            expense={selected}
+            accounts={accounts}
+            categories={categories}
+            beneficiaries={beneficiaries}
+            currency={currency}
+            timeZone={household?.timezone ?? 'UTC'}
+            submitting={submitting}
+            error={formError}
+            onSubmit={handleSubmit}
+            onCancel={closeForm}
+            onVoid={
+              formMode === 'edit' && selected?.capabilities.canVoid
+                ? handleVoid
+                : undefined
+            }
+          />
+        </DialogContent>
+      </Dialog>
     </section>
   )
 }

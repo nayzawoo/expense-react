@@ -134,6 +134,13 @@ describe('BeneficiariesPage', () => {
 
     await screen.findByText('Family Pool')
     await user.click(screen.getByRole('button', { name: 'Add beneficiary' }))
+
+    const dialog = await screen.findByRole('dialog', {
+      name: 'Add beneficiary',
+    })
+    expect(dialog).toHaveAttribute('data-slot', 'dialog-content')
+    expect(document.querySelector('[data-slot="sheet-content"]')).toBeNull()
+
     await user.type(screen.getByLabelText('Name'), 'Shared Person')
     await user.click(screen.getByRole('button', { name: 'Save beneficiary' }))
 

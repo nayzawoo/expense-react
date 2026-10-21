@@ -40,14 +40,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
 import {
   Table,
   TableBody,
@@ -70,7 +70,7 @@ const selectClassName = cn(
 )
 
 type StatusFilter = 'ALL' | AccountStatus
-type SheetMode = 'create' | 'adjust'
+type FormMode = 'create' | 'adjust'
 
 function accountErrorKey(err: unknown): string {
   const recoveryKey = idempotencyClientErrorKey(err)
@@ -128,8 +128,8 @@ export function AccountsPage() {
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
 
-  const [sheetOpen, setSheetOpen] = useState(false)
-  const [sheetMode, setSheetMode] = useState<SheetMode>('create')
+  const [formOpen, setFormOpen] = useState(false)
+  const [formMode, setFormMode] = useState<FormMode>('create')
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -162,7 +162,7 @@ export function AccountsPage() {
   const mutationBusy = submitting || voiding || refreshing
   const voidLocked = Boolean(reloadError || pendingToast)
 
-  function isSheetFrozen() {
+  function isFormFrozen() {
     return mutationBusy || reloadInFlightRef.current
   }
 
@@ -345,23 +345,23 @@ export function AccountsPage() {
   }
 
   function openCreate() {
-    if (isSheetFrozen()) {
+    if (isFormFrozen()) {
       return
     }
     adjustRequestRef.current += 1
     resetAdjustState()
-    setSheetMode('create')
+    setFormMode('create')
     setFormError(null)
-    setSheetOpen(true)
+    setFormOpen(true)
   }
 
   function openAdjust(account: Account) {
-    if (!isAdmin || account.status !== 'ACTIVE' || isSheetFrozen()) {
+    if (!isAdmin || account.status !== 'ACTIVE' || isFormFrozen()) {
       return
     }
     const requestId = ++adjustRequestRef.current
     selectedAccountIdRef.current = account.id
-    setSheetMode('adjust')
+    setFormMode('adjust')
     setSelectedAccountId(account.id)
     setSelectedAccountName(account.name)
     setSnapshot(null)
@@ -377,26 +377,33 @@ export function AccountsPage() {
     setHistoryLoading(false)
     invalidateDetailSelection()
     setFormSession((current) => current + 1)
-    setSheetOpen(true)
+    setFormOpen(true)
     void loadSnapshot(account.id, requestId)
     void loadHistory(account.id, requestId)
   }
 
-  function closeSheet() {
-    if (isSheetFrozen()) {
+  function closeForm() {
+    if (isFormFrozen()) {
       return
     }
     adjustRequestRef.current += 1
-    setSheetOpen(false)
+    setFormOpen(false)
     resetAdjustState()
   }
 
-  function handleSheetOpenChange(open: boolean) {
-    if (!open) {
-      closeSheet()
+  function handleFormOpenChange(
+    open: boolean,
+    details?: { cancel: () => void },
+  ) {
+    if (open) {
+      setFormOpen(true)
       return
     }
-    setSheetOpen(true)
+    if (isFormFrozen()) {
+      details?.cancel()
+      return
+    }
+    closeForm()
   }
 
   async function handleSubmit(values: AccountFormValues | CreateAccountInput) {
@@ -410,7 +417,7 @@ export function AccountsPage() {
     try {
       await createAccount(household.id, values as CreateAccountInput)
       toast.success(t('common.toast.created'))
-      setSheetOpen(false)
+      setFormOpen(false)
       await load()
     } catch (err) {
       setFormError(t(accountErrorKey(err)))
@@ -420,7 +427,7 @@ export function AccountsPage() {
   }
 
   async function handleReconcile(values: AdjustmentFormValues) {
-    if (!household || !snapshot || isSheetFrozen() || voidLocked) {
+    if (!household || !snapshot || isFormFrozen() || voidLocked) {
       return
     }
     if (snapshot.status !== 'ACTIVE') {
@@ -456,7 +463,7 @@ export function AccountsPage() {
 
   async function handleRetryReload() {
     const accountId = selectedAccountIdRef.current
-    if (!accountId || isSheetFrozen()) {
+    if (!accountId || isFormFrozen()) {
       return
     }
     const refreshed = await reloadAfterMutation(accountId)
@@ -470,7 +477,7 @@ export function AccountsPage() {
 
   async function handleRefreshBalance() {
     const accountId = selectedAccountIdRef.current
-    if (!household || !accountId || isSheetFrozen()) {
+    if (!household || !accountId || isFormFrozen()) {
       return
     }
     const requestId = ++adjustRequestRef.current
@@ -504,7 +511,7 @@ export function AccountsPage() {
   }
 
   async function handleSelectAdjustment(row: Adjustment) {
-    if (!household || isSheetFrozen() || voidLocked) {
+    if (!household || isFormFrozen() || voidLocked) {
       return
     }
     const accountId = selectedAccountIdRef.current
@@ -548,7 +555,7 @@ export function AccountsPage() {
       !household ||
       !selectedAdjustment ||
       !selectedAccountId ||
-      isSheetFrozen() ||
+      isFormFrozen() ||
       voidLocked
     ) {
       return
@@ -719,90 +726,92 @@ export function AccountsPage() {
         </CardContent>
       </Card>
 
-      <Sheet open={sheetOpen} onOpenChange={handleSheetOpenChange}>
-        <SheetContent
-          className="overflow-y-auto sm:max-w-md"
+      <Dialog
+        open={formOpen}
+        disablePointerDismissal={mutationBusy}
+        onOpenChange={handleFormOpenChange}
+      >
+        <DialogContent
+          className="sm:max-w-md"
           showCloseButton={!mutationBusy}
         >
-          {sheetMode === 'create' ? (
+          {formMode === 'create' ? (
             <>
-              <SheetHeader>
-                <SheetTitle>{t('accounts.form.createTitle')}</SheetTitle>
-                <SheetDescription>
+              <DialogHeader>
+                <DialogTitle>{t('accounts.form.createTitle')}</DialogTitle>
+                <DialogDescription>
                   {t('accounts.form.createHint')}
-                </SheetDescription>
-              </SheetHeader>
-              <div className="px-4 pb-4">
-                {household ? (
-                  <AccountForm
-                    key={`create-${sheetOpen}`}
-                    defaultSortOrder={nextSortOrder}
-                    currency={household.currency}
-                    timeZone={household.timezone}
-                    submitting={submitting}
-                    error={formError}
-                    onSubmit={handleSubmit}
-                    onCancel={closeSheet}
-                  />
-                ) : null}
-              </div>
+                </DialogDescription>
+              </DialogHeader>
+              {household ? (
+                <AccountForm
+                  key={`create-${formOpen}`}
+                  defaultSortOrder={nextSortOrder}
+                  currency={household.currency}
+                  timeZone={household.timezone}
+                  submitting={submitting}
+                  error={formError}
+                  onSubmit={handleSubmit}
+                  onCancel={closeForm}
+                />
+              ) : null}
             </>
           ) : (
             <>
-              <SheetHeader>
-                <SheetTitle>{t('accounts.adjust.title')}</SheetTitle>
-                <SheetDescription>{t('accounts.adjust.hint')}</SheetDescription>
-              </SheetHeader>
-              <div className="px-4 pb-4">
-                <AdjustmentPanel
-                  key={`adjust-${formSession}`}
-                  accountName={selectedAccountName}
-                  snapshot={snapshot}
-                  snapshotLoading={snapshotLoading}
-                  snapshotError={snapshotError}
-                  onRetrySnapshot={() => {
-                    if (!selectedAccountId || isSheetFrozen()) {
-                      return
-                    }
-                    const requestId = ++adjustRequestRef.current
-                    invalidateDetailSelection()
-                    void loadSnapshot(selectedAccountId, requestId)
-                  }}
-                  submitting={submitting}
-                  formError={formError}
-                  balanceChanged={balanceChanged}
-                  onRefreshBalance={() => void handleRefreshBalance()}
-                  refreshing={refreshing}
-                  reloadError={reloadError}
-                  onRetryReload={() => void handleRetryReload()}
-                  submitLocked={Boolean(pendingToast)}
-                  voidLocked={voidLocked}
-                  onSubmit={handleReconcile}
-                  onCancel={closeSheet}
-                  history={history}
-                  historyLoading={historyLoading}
-                  historyError={historyError}
-                  onRetryHistory={() => {
-                    if (!selectedAccountId || isSheetFrozen()) {
-                      return
-                    }
-                    void loadHistory(
-                      selectedAccountId,
-                      adjustRequestRef.current,
-                    )
-                  }}
-                  selected={selectedAdjustment}
-                  selectedLoading={selectedLoading}
-                  selectedError={selectedError}
-                  onSelect={(row) => void handleSelectAdjustment(row)}
-                  voiding={voiding}
-                  onVoid={handleVoid}
-                />
-              </div>
+              <DialogHeader>
+                <DialogTitle>{t('accounts.adjust.title')}</DialogTitle>
+                <DialogDescription>
+                  {t('accounts.adjust.hint')}
+                </DialogDescription>
+              </DialogHeader>
+              <AdjustmentPanel
+                key={`adjust-${formSession}`}
+                accountName={selectedAccountName}
+                snapshot={snapshot}
+                snapshotLoading={snapshotLoading}
+                snapshotError={snapshotError}
+                onRetrySnapshot={() => {
+                  if (!selectedAccountId || isFormFrozen()) {
+                    return
+                  }
+                  const requestId = ++adjustRequestRef.current
+                  invalidateDetailSelection()
+                  void loadSnapshot(selectedAccountId, requestId)
+                }}
+                submitting={submitting}
+                formError={formError}
+                balanceChanged={balanceChanged}
+                onRefreshBalance={() => void handleRefreshBalance()}
+                refreshing={refreshing}
+                reloadError={reloadError}
+                onRetryReload={() => void handleRetryReload()}
+                submitLocked={Boolean(pendingToast)}
+                voidLocked={voidLocked}
+                onSubmit={handleReconcile}
+                onCancel={closeForm}
+                history={history}
+                historyLoading={historyLoading}
+                historyError={historyError}
+                onRetryHistory={() => {
+                  if (!selectedAccountId || isFormFrozen()) {
+                    return
+                  }
+                  void loadHistory(
+                    selectedAccountId,
+                    adjustRequestRef.current,
+                  )
+                }}
+                selected={selectedAdjustment}
+                selectedLoading={selectedLoading}
+                selectedError={selectedError}
+                onSelect={(row) => void handleSelectAdjustment(row)}
+                voiding={voiding}
+                onVoid={handleVoid}
+              />
             </>
           )}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </section>
   )
 }

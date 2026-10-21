@@ -39,14 +39,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
 import {
   Table,
   TableBody,
@@ -62,7 +62,7 @@ const selectClassName = cn(
   'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm',
 )
 
-type SheetMode = 'create' | 'edit' | 'resetPassword'
+type FormMode = 'create' | 'edit' | 'resetPassword'
 type StatusFilter = 'ALL' | UserStatus
 
 function memberErrorKey(err: unknown): string {
@@ -97,8 +97,8 @@ export function MembersPage() {
   const [error, setError] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
 
-  const [sheetOpen, setSheetOpen] = useState(false)
-  const [sheetMode, setSheetMode] = useState<SheetMode>('create')
+  const [formOpen, setFormOpen] = useState(false)
+  const [formMode, setFormMode] = useState<FormMode>('create')
   const [selected, setSelected] = useState<HouseholdUser | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -153,33 +153,48 @@ export function MembersPage() {
   }, [members, statusFilter])
 
   function openCreate() {
-    setSheetMode('create')
+    setFormMode('create')
     setSelected(null)
     setFormError(null)
-    setSheetOpen(true)
+    setFormOpen(true)
   }
 
   function openEdit(member: HouseholdUser) {
-    setSheetMode('edit')
+    setFormMode('edit')
     setSelected(member)
     setFormError(null)
-    setSheetOpen(true)
+    setFormOpen(true)
   }
 
   function openResetPassword(member: HouseholdUser) {
-    setSheetMode('resetPassword')
+    setFormMode('resetPassword')
     setSelected(member)
     setFormError(null)
-    setSheetOpen(true)
+    setFormOpen(true)
   }
 
-  function closeSheet() {
+  function closeForm() {
     if (submitting) {
       return
     }
-    setSheetOpen(false)
+    setFormOpen(false)
     setSelected(null)
     setFormError(null)
+  }
+
+  function handleFormOpenChange(
+    open: boolean,
+    details?: { cancel: () => void },
+  ) {
+    if (open) {
+      setFormOpen(true)
+      return
+    }
+    if (submitting) {
+      details?.cancel()
+      return
+    }
+    closeForm()
   }
 
   async function handleCreate(values: CreateHouseholdUserInput) {
@@ -193,7 +208,7 @@ export function MembersPage() {
     try {
       await createHouseholdUser(household.id, values)
       toast.success(t('common.toast.created'))
-      setSheetOpen(false)
+      setFormOpen(false)
       setSelected(null)
       await load()
     } catch (err) {
@@ -214,7 +229,7 @@ export function MembersPage() {
     try {
       await updateHouseholdUser(household.id, selected.id, values)
       toast.success(t('common.toast.updated'))
-      setSheetOpen(false)
+      setFormOpen(false)
       setSelected(null)
       await load()
     } catch (err) {
@@ -235,7 +250,7 @@ export function MembersPage() {
     try {
       await assignTemporaryPassword(household.id, selected.id, temporaryPassword)
       toast.success(t('common.toast.passwordAssigned'))
-      setSheetOpen(false)
+      setFormOpen(false)
       setSelected(null)
       await load()
     } catch (err) {
@@ -463,60 +478,58 @@ export function MembersPage() {
         </CardContent>
       </Card>
 
-      <Sheet
-        open={sheetOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            closeSheet()
-          }
-        }}
+      <Dialog
+        open={formOpen}
+        disablePointerDismissal={submitting}
+        onOpenChange={handleFormOpenChange}
       >
-        <SheetContent className="overflow-y-auto sm:max-w-md">
-          <SheetHeader>
-            <SheetTitle>
-              {sheetMode === 'create'
+        <DialogContent
+          className="sm:max-w-md"
+          showCloseButton={!submitting}
+        >
+          <DialogHeader>
+            <DialogTitle>
+              {formMode === 'create'
                 ? t('members.form.createTitle')
-                : sheetMode === 'edit'
+                : formMode === 'edit'
                   ? t('members.form.editTitle')
                   : t('members.form.resetPasswordTitle')}
-            </SheetTitle>
-            <SheetDescription>
-              {sheetMode === 'create'
+            </DialogTitle>
+            <DialogDescription>
+              {formMode === 'create'
                 ? t('members.form.createHint')
-                : sheetMode === 'edit'
+                : formMode === 'edit'
                   ? t('members.form.editHint')
                   : t('members.form.resetPasswordSheetHint')}
-            </SheetDescription>
-          </SheetHeader>
-          <div className="mt-6">
-            {sheetMode === 'resetPassword' ? (
-              <TemporaryPasswordForm
-                key={selected?.id ?? `reset-${String(sheetOpen)}`}
-                submitting={submitting}
-                error={formError}
-                onSubmit={handleResetPassword}
-                onCancel={closeSheet}
-              />
-            ) : (
-              <MemberForm
-                key={
-                  sheetMode === 'edit' && selected
-                    ? selected.id
-                    : `create-${String(sheetOpen)}`
-                }
-                mode={sheetMode}
-                member={selected}
-                isSelf={Boolean(selected && user?.id === selected.id)}
-                submitting={submitting}
-                error={formError}
-                onSubmitCreate={handleCreate}
-                onSubmitEdit={handleEdit}
-                onCancel={closeSheet}
-              />
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
+            </DialogDescription>
+          </DialogHeader>
+          {formMode === 'resetPassword' ? (
+            <TemporaryPasswordForm
+              key={selected?.id ?? `reset-${String(formOpen)}`}
+              submitting={submitting}
+              error={formError}
+              onSubmit={handleResetPassword}
+              onCancel={closeForm}
+            />
+          ) : (
+            <MemberForm
+              key={
+                formMode === 'edit' && selected
+                  ? selected.id
+                  : `create-${String(formOpen)}`
+              }
+              mode={formMode}
+              member={selected}
+              isSelf={Boolean(selected && user?.id === selected.id)}
+              submitting={submitting}
+              error={formError}
+              onSubmitCreate={handleCreate}
+              onSubmitEdit={handleEdit}
+              onCancel={closeForm}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   )
 }

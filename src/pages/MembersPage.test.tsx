@@ -133,6 +133,11 @@ describe('MembersPage', () => {
 
     await screen.findByText('Sample Admin')
     await user.click(screen.getByRole('button', { name: 'Add member' }))
+
+    const dialog = await screen.findByRole('dialog', { name: 'Add member' })
+    expect(dialog).toHaveAttribute('data-slot', 'dialog-content')
+    expect(document.querySelector('[data-slot="sheet-content"]')).toBeNull()
+
     await user.type(screen.getByLabelText('Display name'), 'New Member')
     await user.type(screen.getByLabelText('Email'), 'new.member@example.com')
     await user.type(screen.getByLabelText('Temporary password'), 'temp-pass-1')

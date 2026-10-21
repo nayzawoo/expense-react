@@ -29,14 +29,14 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
 import {
   Table,
   TableBody,
@@ -54,7 +54,7 @@ const selectClassName = cn(
   'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm',
 )
 
-type SheetMode = 'create' | 'detail'
+type FormMode = 'create' | 'detail'
 
 export function TransfersPage() {
   const { t } = useTranslation()
@@ -71,8 +71,8 @@ export function TransfersPage() {
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
 
-  const [sheetOpen, setSheetOpen] = useState(false)
-  const [sheetMode, setSheetMode] = useState<SheetMode>('create')
+  const [formOpen, setFormOpen] = useState(false)
+  const [formMode, setFormMode] = useState<FormMode>('create')
   const [selected, setSelected] = useState<Transfer | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -147,26 +147,41 @@ export function TransfersPage() {
   }, [transfers, query, sourceFilter, destinationFilter, fromDate, toDate])
 
   function openCreate() {
-    setSheetMode('create')
+    setFormMode('create')
     setSelected(null)
     setFormError(null)
-    setSheetOpen(true)
+    setFormOpen(true)
   }
 
   function openDetail(transfer: Transfer) {
-    setSheetMode('detail')
+    setFormMode('detail')
     setSelected(transfer)
     setFormError(null)
-    setSheetOpen(true)
+    setFormOpen(true)
   }
 
-  function closeSheet() {
+  function closeForm() {
     if (submitting) {
       return
     }
-    setSheetOpen(false)
+    setFormOpen(false)
     setSelected(null)
     setFormError(null)
+  }
+
+  function handleFormOpenChange(
+    open: boolean,
+    details?: { cancel: () => void },
+  ) {
+    if (open) {
+      setFormOpen(true)
+      return
+    }
+    if (submitting) {
+      details?.cancel()
+      return
+    }
+    closeForm()
   }
 
   async function handleSubmit(values: TransferFormValues) {
@@ -186,7 +201,7 @@ export function TransfersPage() {
         note: values.note || undefined,
       })
       toast.success(t('common.toast.created'))
-      setSheetOpen(false)
+      setFormOpen(false)
       setSelected(null)
       await load()
     } catch (err) {
@@ -209,7 +224,7 @@ export function TransfersPage() {
         reason,
       })
       toast.success(t('common.toast.voided'))
-      setSheetOpen(false)
+      setFormOpen(false)
       setSelected(null)
       await load()
     } catch (err) {
@@ -417,52 +432,50 @@ export function TransfersPage() {
         </CardContent>
       </Card>
 
-      <Sheet
-        open={sheetOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            closeSheet()
-          }
-        }}
+      <Dialog
+        open={formOpen}
+        disablePointerDismissal={submitting}
+        onOpenChange={handleFormOpenChange}
       >
-        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
-          <SheetHeader>
-            <SheetTitle>
-              {sheetMode === 'create'
+        <DialogContent
+          className="sm:max-w-md"
+          showCloseButton={!submitting}
+        >
+          <DialogHeader>
+            <DialogTitle>
+              {formMode === 'create'
                 ? t('transfers.form.createTitle')
                 : t('transfers.form.detailTitle')}
-            </SheetTitle>
-            <SheetDescription>
-              {sheetMode === 'create'
+            </DialogTitle>
+            <DialogDescription>
+              {formMode === 'create'
                 ? t('transfers.form.createHint')
                 : t('transfers.form.detailHint')}
-            </SheetDescription>
-          </SheetHeader>
-          <div className="px-4 pb-4">
-            <TransferForm
-              key={
-                sheetMode === 'detail' && selected
-                  ? `detail-${selected.id}-${selected.version}`
-                  : `create-${accounts.length}`
-              }
-              mode={sheetMode}
-              transfer={selected}
-              accounts={accounts}
-              currency={currency}
-              timeZone={household?.timezone ?? 'UTC'}
-              submitting={submitting}
-              error={formError}
-              onSubmit={handleSubmit}
-              onCancel={closeSheet}
-              onVoid={
-                sheetMode === 'detail' && selected?.capabilities.canVoid
-                  ? handleVoid
-                  : undefined
-              }
-            />
-          </div>
-        </SheetContent>
-      </Sheet>
+            </DialogDescription>
+          </DialogHeader>
+          <TransferForm
+            key={
+              formMode === 'detail' && selected
+                ? `detail-${selected.id}-${selected.version}`
+                : `create-${accounts.length}`
+            }
+            mode={formMode}
+            transfer={selected}
+            accounts={accounts}
+            currency={currency}
+            timeZone={household?.timezone ?? 'UTC'}
+            submitting={submitting}
+            error={formError}
+            onSubmit={handleSubmit}
+            onCancel={closeForm}
+            onVoid={
+              formMode === 'detail' && selected?.capabilities.canVoid
+                ? handleVoid
+                : undefined
+            }
+          />
+        </DialogContent>
+      </Dialog>
     </section>
   )
 }

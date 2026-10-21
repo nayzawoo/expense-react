@@ -29,14 +29,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
 import {
   Table,
   TableBody,
@@ -52,7 +52,7 @@ const selectClassName = cn(
   'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm',
 )
 
-type SheetMode = 'create' | 'edit'
+type FormMode = 'create' | 'edit'
 type StatusFilter = 'ALL' | BeneficiaryStatus
 
 function beneficiaryErrorKey(err: unknown): string {
@@ -87,8 +87,8 @@ export function BeneficiariesPage() {
   const [error, setError] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
 
-  const [sheetOpen, setSheetOpen] = useState(false)
-  const [sheetMode, setSheetMode] = useState<SheetMode>('create')
+  const [formOpen, setFormOpen] = useState(false)
+  const [formMode, setFormMode] = useState<FormMode>('create')
   const [selected, setSelected] = useState<Beneficiary | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -134,26 +134,41 @@ export function BeneficiariesPage() {
   }, [beneficiaries, statusFilter])
 
   function openCreate() {
-    setSheetMode('create')
+    setFormMode('create')
     setSelected(null)
     setFormError(null)
-    setSheetOpen(true)
+    setFormOpen(true)
   }
 
   function openEdit(beneficiary: Beneficiary) {
-    setSheetMode('edit')
+    setFormMode('edit')
     setSelected(beneficiary)
     setFormError(null)
-    setSheetOpen(true)
+    setFormOpen(true)
   }
 
-  function closeSheet() {
+  function closeForm() {
     if (submitting) {
       return
     }
-    setSheetOpen(false)
+    setFormOpen(false)
     setSelected(null)
     setFormError(null)
+  }
+
+  function handleFormOpenChange(
+    open: boolean,
+    details?: { cancel: () => void },
+  ) {
+    if (open) {
+      setFormOpen(true)
+      return
+    }
+    if (submitting) {
+      details?.cancel()
+      return
+    }
+    closeForm()
   }
 
   async function handleSubmit(values: BeneficiaryFormValues) {
@@ -165,14 +180,14 @@ export function BeneficiariesPage() {
     setSubmitting(true)
     setFormError(null)
     try {
-      if (sheetMode === 'create') {
+      if (formMode === 'create') {
         await createBeneficiary(household.id, values)
         toast.success(t('common.toast.created'))
       } else if (selected) {
         await updateBeneficiary(household.id, selected.id, values)
         toast.success(t('common.toast.updated'))
       }
-      setSheetOpen(false)
+      setFormOpen(false)
       setSelected(null)
       await load()
     } catch (err) {
@@ -380,44 +395,42 @@ export function BeneficiariesPage() {
         </CardContent>
       </Card>
 
-      <Sheet
-        open={sheetOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            closeSheet()
-          }
-        }}
+      <Dialog
+        open={formOpen}
+        disablePointerDismissal={submitting}
+        onOpenChange={handleFormOpenChange}
       >
-        <SheetContent className="overflow-y-auto sm:max-w-md">
-          <SheetHeader>
-            <SheetTitle>
-              {sheetMode === 'create'
+        <DialogContent
+          className="sm:max-w-md"
+          showCloseButton={!submitting}
+        >
+          <DialogHeader>
+            <DialogTitle>
+              {formMode === 'create'
                 ? t('beneficiaries.form.createTitle')
                 : t('beneficiaries.form.editTitle')}
-            </SheetTitle>
-            <SheetDescription>
-              {sheetMode === 'create'
+            </DialogTitle>
+            <DialogDescription>
+              {formMode === 'create'
                 ? t('beneficiaries.form.createHint')
                 : t('beneficiaries.form.editHint')}
-            </SheetDescription>
-          </SheetHeader>
-          <div className="mt-6">
-            <BeneficiaryForm
-              key={
-                sheetMode === 'edit' && selected
-                  ? selected.id
-                  : `create-${String(sheetOpen)}`
-              }
-              mode={sheetMode}
-              beneficiary={selected}
-              submitting={submitting}
-              error={formError}
-              onSubmit={handleSubmit}
-              onCancel={closeSheet}
-            />
-          </div>
-        </SheetContent>
-      </Sheet>
+            </DialogDescription>
+          </DialogHeader>
+          <BeneficiaryForm
+            key={
+              formMode === 'edit' && selected
+                ? selected.id
+                : `create-${String(formOpen)}`
+            }
+            mode={formMode}
+            beneficiary={selected}
+            submitting={submitting}
+            error={formError}
+            onSubmit={handleSubmit}
+            onCancel={closeForm}
+          />
+        </DialogContent>
+      </Dialog>
     </section>
   )
 }

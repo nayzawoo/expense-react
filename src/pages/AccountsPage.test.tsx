@@ -172,6 +172,10 @@ describe('AccountsPage', () => {
     expect(await screen.findByText('1,250 MMK')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Add account' }))
 
+    const dialog = await screen.findByRole('dialog', { name: 'Add account' })
+    expect(dialog).toHaveAttribute('data-slot', 'dialog-content')
+    expect(document.querySelector('[data-slot="sheet-content"]')).toBeNull()
+
     const nameInput = await screen.findByLabelText('Name')
     await user.clear(nameInput)
     await user.type(nameInput, 'Savings')
@@ -511,7 +515,11 @@ describe('AccountsPage', () => {
     renderWithProviders(<AccountsPage />)
     await screen.findByText('1,250 MMK')
     await user.click(within(cashRow()!).getByRole('button', { name: 'Adjust balance' }))
-    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+    const adjustDialog = await screen.findByRole('dialog', {
+      name: 'Adjust balance',
+    })
+    expect(adjustDialog).toHaveAttribute('data-slot', 'dialog-content')
+    expect(document.querySelector('[data-slot="sheet-content"]')).toBeNull()
     await user.click(screen.getByRole('button', { name: 'Cancel' }))
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull()
@@ -655,7 +663,7 @@ describe('AccountsPage', () => {
     expect(within(sheet).getByText('Wallet count')).toBeInTheDocument()
   })
 
-  it('freezes the sheet during reload retry and keeps void locked until reload succeeds', async () => {
+  it('freezes the dialog during reload retry and keeps void locked until reload succeeds', async () => {
     const user = userEvent.setup()
     let resolveRetry!: (value: unknown) => void
     const retryGate = new Promise((resolve) => {
