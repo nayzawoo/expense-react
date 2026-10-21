@@ -61,8 +61,8 @@ Do not commit `.env` or real secrets. `.env.example` is the committed template.
 | `npm run test:e2e:ui` | Open the Playwright UI runner |
 
 Unit tests use Vitest + Testing Library with mocked network calls. They cover API
-client helpers, auth route gates, accounts list rendering, the home dashboard
-summary, and period reports.
+client helpers, auth route gates, accounts list rendering, admin balance
+adjustments, the home dashboard summary, and period reports.
 
 Smoke e2e uses Playwright against the Vite preview server (Chromium). Specs live
 under `e2e/`. Guest specs assert the app boots to the login page. Authenticated
@@ -84,7 +84,7 @@ are not stored.
 | Sign in | `/login` | Guest only |
 | Change password | `/change-password` | Required when the API sets `mustChangePassword` |
 | Dashboard | `/` | Household summary from the reports API |
-| Accounts | `/accounts` | Live account list from the API |
+| Accounts | `/accounts` | Live account list; admins can reconcile ACTIVE balances |
 | Expenses | `/expenses` | Posted expenses list and form |
 | Transfers | `/transfers` | Account-to-account moves (create / void) |
 | Reports | `/reports` | Period analytics from the reports API |
@@ -100,6 +100,11 @@ are not stored.
 - `PUT /api/v1/password`
 - `GET /api/v1/household`
 - `GET /api/v1/households/{householdId}/accounts`
+- `GET /api/v1/households/{householdId}/accounts/{accountId}`
+- `POST /api/v1/households/{householdId}/accounts/{accountId}/reconciliations`
+- `GET /api/v1/households/{householdId}/adjustments`
+- `GET /api/v1/households/{householdId}/adjustments/{adjustmentId}`
+- `POST /api/v1/households/{householdId}/adjustments/{adjustmentId}/void`
 - `GET /api/v1/households/{householdId}/transfers`
 - `POST /api/v1/households/{householdId}/transfers`
 - `POST /api/v1/households/{householdId}/transfers/{transferId}/void`
@@ -119,5 +124,8 @@ the client refreshes or clears CSRF state.
 
 ## Scope notes
 
-This slice covers env-based API wiring, session auth, forced password change, and
-the accounts list. Expense create/list and other financial writes remain follow-up work.
+This slice covers env-based API wiring, session auth, forced password change,
+accounts, expenses, transfers, reports, and admin account-balance reconciliation.
+Reconciliation is admin-only, scoped to ACTIVE accounts on `/accounts`, and uses
+CSRF plus `Idempotency-Key` (and `If-Match` on void). The server assigns the
+household-local date; the client never sends an effective date.

@@ -380,7 +380,7 @@ test.describe('report charts (mocked API)', () => {
     })
     await page.goto('/')
     await expect(
-      page.getByRole('figure', { name: 'အသုံးစရိတ် အရှိန်' }),
+      page.getByRole('figure', { name: 'နေ့စဉ် အသုံးစရိတ်' }),
     ).toBeVisible()
     await waitForChartToFit(page, 'spending-pace')
   })

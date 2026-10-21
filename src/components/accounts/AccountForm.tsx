@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { householdToday } from '@/lib/household-date'
+import { isSignedMoneyString } from '@/lib/money'
 import { cn } from '@/lib/utils'
 
 const selectClassName = cn(
@@ -16,11 +17,6 @@ const selectClassName = cn(
 )
 
 const ACCOUNT_TYPES: AccountType[] = ['CASH', 'WALLET', 'BANK']
-
-/** Whole signed MMK string including zero (Spring Money.parseSignedOpening). */
-function isSignedMoneyString(value: string): boolean {
-  return /^-?(0|[1-9]\d*)$/.test(value.trim())
-}
 
 export type AccountFormValues = CreateAccountInput
 

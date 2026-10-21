@@ -1,21 +1,33 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { PlusCircle, Wallet } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import {
   createAccount,
+  getAccount,
   listAccounts,
   type Account,
   type AccountStatus,
   type CreateAccountInput,
 } from '@/api/accounts'
+import {
+  getAdjustment,
+  listAdjustments,
+  reconcileAccount,
+  voidAdjustment,
+  type Adjustment,
+} from '@/api/adjustments'
 import { isApiError } from '@/api/errors'
 import { useAuth } from '@/auth/useAuth'
 import {
   AccountForm,
   type AccountFormValues,
 } from '@/components/accounts/AccountForm'
+import {
+  AdjustmentPanel,
+  type AdjustmentFormValues,
+} from '@/components/accounts/AdjustmentPanel'
 import { PageEmptyState } from '@/components/PageEmptyState'
 import { PageErrorAlert } from '@/components/PageErrorAlert'
 import { PageLoading } from '@/components/PageLoading'
@@ -44,6 +56,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  adjustmentErrorKey,
+  isBalanceChangedError,
+} from '@/lib/adjustment-errors'
 import { idempotencyClientErrorKey } from '@/lib/idempotency'
 import { formatMoney } from '@/lib/money'
 import { cn } from '@/lib/utils'
@@ -54,6 +70,7 @@ const selectClassName = cn(
 )
 
 type StatusFilter = 'ALL' | AccountStatus
+type SheetMode = 'create' | 'adjust'
 
 function accountErrorKey(err: unknown): string {
   const recoveryKey = idempotencyClientErrorKey(err)
@@ -90,6 +107,17 @@ function accountErrorKey(err: unknown): string {
   return 'accounts.errors.generic'
 }
 
+function loadFailureMessage(
+  err: unknown,
+  fallbackKey: string,
+  translate: (key: string) => string,
+): string {
+  if (err instanceof TypeError) {
+    return translate('common.offlineOrApi')
+  }
+  return translate(fallbackKey)
+}
+
 export function AccountsPage() {
   const { t } = useTranslation()
   const { household, user } = useAuth()
@@ -101,8 +129,49 @@ export function AccountsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
 
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [sheetMode, setSheetMode] = useState<SheetMode>('create')
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
+    null,
+  )
+  const [selectedAccountName, setSelectedAccountName] = useState('')
+  const [snapshot, setSnapshot] = useState<Account | null>(null)
+  const [snapshotLoading, setSnapshotLoading] = useState(false)
+  const [snapshotError, setSnapshotError] = useState<string | null>(null)
+  const [balanceChanged, setBalanceChanged] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
+  const [reloadError, setReloadError] = useState<string | null>(null)
+  const [formSession, setFormSession] = useState(0)
+
+  const [history, setHistory] = useState<Adjustment[] | null>(null)
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyError, setHistoryError] = useState<string | null>(null)
+  const [selectedAdjustment, setSelectedAdjustment] =
+    useState<Adjustment | null>(null)
+  const [selectedLoading, setSelectedLoading] = useState(false)
+  const [selectedError, setSelectedError] = useState<string | null>(null)
+  const [voiding, setVoiding] = useState(false)
+  const [pendingToast, setPendingToast] = useState<string | null>(null)
+
+  const adjustRequestRef = useRef(0)
+  const detailRequestRef = useRef(0)
+  const selectedAccountIdRef = useRef<string | null>(null)
+  const reloadInFlightRef = useRef(false)
+  const mutationBusy = submitting || voiding || refreshing
+  const voidLocked = Boolean(reloadError || pendingToast)
+
+  function isSheetFrozen() {
+    return mutationBusy || reloadInFlightRef.current
+  }
+
+  function invalidateDetailSelection() {
+    detailRequestRef.current += 1
+    setSelectedAdjustment(null)
+    setSelectedError(null)
+    setSelectedLoading(false)
+  }
 
   const load = useCallback(async () => {
     if (!household) {
@@ -120,11 +189,7 @@ export function AccountsPage() {
       setAccounts(rows)
     } catch (err) {
       setAccounts(null)
-      if (err instanceof TypeError) {
-        setError(t('common.offlineOrApi'))
-      } else {
-        setError(t('accounts.loadError'))
-      }
+      setError(loadFailureMessage(err, 'accounts.loadError', t))
     } finally {
       setLoading(false)
     }
@@ -151,8 +216,186 @@ export function AccountsPage() {
     return Math.max(...accounts.map((row) => row.sortOrder)) + 1
   }, [accounts])
 
-  function openCreate() {
+  const loadSnapshot = useCallback(
+    async (accountId: string, requestId: number) => {
+      if (!household) {
+        setSnapshotError(t('accounts.loadError'))
+        setSnapshotLoading(false)
+        return
+      }
+      setSnapshotLoading(true)
+      setSnapshotError(null)
+      try {
+        const fresh = await getAccount(household.id, accountId)
+        if (requestId !== adjustRequestRef.current) {
+          return
+        }
+        setSnapshot(fresh)
+      } catch (err) {
+        if (requestId !== adjustRequestRef.current) {
+          return
+        }
+        setSnapshotError(loadFailureMessage(err, 'accounts.loadError', t))
+      } finally {
+        if (requestId === adjustRequestRef.current) {
+          setSnapshotLoading(false)
+        }
+      }
+    },
+    [household, t],
+  )
+
+  const loadHistory = useCallback(
+    async (accountId: string, requestId: number) => {
+      if (!household || !isAdmin) {
+        return
+      }
+      setHistoryLoading(true)
+      setHistoryError(null)
+      try {
+        const rows = await listAdjustments(household.id)
+        if (requestId !== adjustRequestRef.current) {
+          return
+        }
+        setHistory(rows.filter((row) => row.account.id === accountId))
+      } catch (err) {
+        if (requestId !== adjustRequestRef.current) {
+          return
+        }
+        setHistory(null)
+        setHistoryError(
+          loadFailureMessage(err, 'accounts.adjust.historyLoadError', t),
+        )
+      } finally {
+        if (requestId === adjustRequestRef.current) {
+          setHistoryLoading(false)
+        }
+      }
+    },
+    [household, isAdmin, t],
+  )
+
+  async function reloadAfterMutation(accountId: string): Promise<boolean> {
+    if (!household) {
+      setReloadError(t('accounts.loadError'))
+      return false
+    }
+    if (reloadInFlightRef.current) {
+      return false
+    }
+    reloadInFlightRef.current = true
+    const requestId = ++adjustRequestRef.current
+    invalidateDetailSelection()
+    setRefreshing(true)
+    setReloadError(null)
+    try {
+      const [rows, fresh, adjustmentRows] = await Promise.all([
+        listAccounts(household.id),
+        getAccount(household.id, accountId),
+        listAdjustments(household.id),
+      ])
+      if (
+        requestId !== adjustRequestRef.current ||
+        selectedAccountIdRef.current !== accountId
+      ) {
+        return false
+      }
+      setAccounts(rows)
+      setSnapshot(fresh)
+      setSnapshotError(null)
+      setHistory(adjustmentRows.filter((row) => row.account.id === accountId))
+      setHistoryError(null)
+      invalidateDetailSelection()
+      return true
+    } catch (err) {
+      if (
+        requestId !== adjustRequestRef.current ||
+        selectedAccountIdRef.current !== accountId
+      ) {
+        return false
+      }
+      setReloadError(
+        loadFailureMessage(err, 'accounts.adjust.reloadError', t),
+      )
+      return false
+    } finally {
+      reloadInFlightRef.current = false
+      if (requestId === adjustRequestRef.current) {
+        setRefreshing(false)
+      }
+    }
+  }
+
+  function resetAdjustState() {
+    selectedAccountIdRef.current = null
+    setSelectedAccountId(null)
+    setSelectedAccountName('')
+    setSnapshot(null)
+    setSnapshotError(null)
+    setSnapshotLoading(false)
+    setBalanceChanged(false)
+    setRefreshing(false)
+    setReloadError(null)
+    setHistory(null)
+    setHistoryError(null)
+    setHistoryLoading(false)
+    invalidateDetailSelection()
     setFormError(null)
+    setPendingToast(null)
+  }
+
+  function openCreate() {
+    if (isSheetFrozen()) {
+      return
+    }
+    adjustRequestRef.current += 1
+    resetAdjustState()
+    setSheetMode('create')
+    setFormError(null)
+    setSheetOpen(true)
+  }
+
+  function openAdjust(account: Account) {
+    if (!isAdmin || account.status !== 'ACTIVE' || isSheetFrozen()) {
+      return
+    }
+    const requestId = ++adjustRequestRef.current
+    selectedAccountIdRef.current = account.id
+    setSheetMode('adjust')
+    setSelectedAccountId(account.id)
+    setSelectedAccountName(account.name)
+    setSnapshot(null)
+    setSnapshotError(null)
+    setSnapshotLoading(false)
+    setBalanceChanged(false)
+    setRefreshing(false)
+    setReloadError(null)
+    setFormError(null)
+    setPendingToast(null)
+    setHistory(null)
+    setHistoryError(null)
+    setHistoryLoading(false)
+    invalidateDetailSelection()
+    setFormSession((current) => current + 1)
+    setSheetOpen(true)
+    void loadSnapshot(account.id, requestId)
+    void loadHistory(account.id, requestId)
+  }
+
+  function closeSheet() {
+    if (isSheetFrozen()) {
+      return
+    }
+    adjustRequestRef.current += 1
+    setSheetOpen(false)
+    resetAdjustState()
+  }
+
+  function handleSheetOpenChange(open: boolean) {
+    if (!open) {
+      closeSheet()
+      return
+    }
     setSheetOpen(true)
   }
 
@@ -176,6 +419,168 @@ export function AccountsPage() {
     }
   }
 
+  async function handleReconcile(values: AdjustmentFormValues) {
+    if (!household || !snapshot || isSheetFrozen() || voidLocked) {
+      return
+    }
+    if (snapshot.status !== 'ACTIVE') {
+      setFormError(t('accounts.adjust.errors.accountNotActive'))
+      return
+    }
+
+    setSubmitting(true)
+    setFormError(null)
+    setBalanceChanged(false)
+    setReloadError(null)
+    try {
+      await reconcileAccount(household.id, snapshot.id, {
+        actualBalance: values.actualBalance,
+        expectedBalanceVersion: snapshot.balanceVersion,
+        reason: values.reason,
+      })
+      setPendingToast('common.toast.created')
+      const refreshed = await reloadAfterMutation(snapshot.id)
+      if (!refreshed) {
+        return
+      }
+      toast.success(t('common.toast.created'))
+      setPendingToast(null)
+      setFormSession((current) => current + 1)
+    } catch (err) {
+      setFormError(t(adjustmentErrorKey(err)))
+      setBalanceChanged(isBalanceChangedError(err))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function handleRetryReload() {
+    const accountId = selectedAccountIdRef.current
+    if (!accountId || isSheetFrozen()) {
+      return
+    }
+    const refreshed = await reloadAfterMutation(accountId)
+    if (!refreshed || !pendingToast) {
+      return
+    }
+    toast.success(t(pendingToast))
+    setPendingToast(null)
+    setFormSession((current) => current + 1)
+  }
+
+  async function handleRefreshBalance() {
+    const accountId = selectedAccountIdRef.current
+    if (!household || !accountId || isSheetFrozen()) {
+      return
+    }
+    const requestId = ++adjustRequestRef.current
+    setRefreshing(true)
+    setReloadError(null)
+    try {
+      const fresh = await getAccount(household.id, accountId)
+      if (
+        requestId !== adjustRequestRef.current ||
+        selectedAccountIdRef.current !== accountId
+      ) {
+        return
+      }
+      setSnapshot(fresh)
+      setSnapshotError(null)
+      setBalanceChanged(false)
+      setFormError(null)
+    } catch (err) {
+      if (
+        requestId !== adjustRequestRef.current ||
+        selectedAccountIdRef.current !== accountId
+      ) {
+        return
+      }
+      setReloadError(loadFailureMessage(err, 'accounts.adjust.reloadError', t))
+    } finally {
+      if (requestId === adjustRequestRef.current) {
+        setRefreshing(false)
+      }
+    }
+  }
+
+  async function handleSelectAdjustment(row: Adjustment) {
+    if (!household || isSheetFrozen() || voidLocked) {
+      return
+    }
+    const accountId = selectedAccountIdRef.current
+    if (!accountId || row.account.id !== accountId) {
+      return
+    }
+    const requestId = ++detailRequestRef.current
+    setSelectedAdjustment(row)
+    setSelectedError(null)
+    setSelectedLoading(true)
+    try {
+      const detail = await getAdjustment(household.id, row.id)
+      if (requestId !== detailRequestRef.current) {
+        return
+      }
+      if (
+        selectedAccountIdRef.current !== accountId ||
+        detail.account.id !== accountId
+      ) {
+        setSelectedAdjustment(null)
+        setSelectedLoading(false)
+        return
+      }
+      setSelectedAdjustment(detail)
+    } catch (err) {
+      if (requestId !== detailRequestRef.current) {
+        return
+      }
+      setSelectedError(
+        loadFailureMessage(err, 'accounts.adjust.detailLoadError', t),
+      )
+    } finally {
+      if (requestId === detailRequestRef.current) {
+        setSelectedLoading(false)
+      }
+    }
+  }
+
+  async function handleVoid(reason: string) {
+    if (
+      !household ||
+      !selectedAdjustment ||
+      !selectedAccountId ||
+      isSheetFrozen() ||
+      voidLocked
+    ) {
+      return
+    }
+    if (selectedAdjustment.account.id !== selectedAccountId) {
+      return
+    }
+    const accountId = selectedAccountId
+    const adjustmentId = selectedAdjustment.id
+    const adjustmentVersion = selectedAdjustment.version
+    setVoiding(true)
+    setFormError(null)
+    setReloadError(null)
+    try {
+      await voidAdjustment(household.id, adjustmentId, adjustmentVersion, {
+        reason,
+      })
+      setPendingToast('common.toast.voided')
+      invalidateDetailSelection()
+      const refreshed = await reloadAfterMutation(accountId)
+      if (!refreshed) {
+        return
+      }
+      toast.success(t('common.toast.voided'))
+      setPendingToast(null)
+    } catch (err) {
+      setFormError(t(adjustmentErrorKey(err)))
+    } finally {
+      setVoiding(false)
+    }
+  }
+
   return (
     <section className="grid gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -188,7 +593,7 @@ export function AccountsPage() {
           </p>
         </div>
         {isAdmin ? (
-          <Button onClick={openCreate}>
+          <Button onClick={openCreate} disabled={mutationBusy}>
             <PlusCircle data-icon="inline-start" />
             {t('accounts.add')}
           </Button>
@@ -250,6 +655,9 @@ export function AccountsPage() {
                   <TableHead>{t('accounts.fields.owner')}</TableHead>
                   <TableHead>{t('accounts.fields.balance')}</TableHead>
                   <TableHead>{t('accounts.fields.status')}</TableHead>
+                  {isAdmin ? (
+                    <TableHead>{t('accounts.fields.actions')}</TableHead>
+                  ) : null}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -287,6 +695,20 @@ export function AccountsPage() {
                         })}
                       </Badge>
                     </TableCell>
+                    {isAdmin ? (
+                      <TableCell>
+                        {account.status === 'ACTIVE' ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={mutationBusy}
+                            onClick={() => openAdjust(account)}
+                          >
+                            {t('accounts.adjust.action')}
+                          </Button>
+                        ) : null}
+                      </TableCell>
+                    ) : null}
                   </TableRow>
                 ))}
               </TableBody>
@@ -297,26 +719,88 @@ export function AccountsPage() {
         </CardContent>
       </Card>
 
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent className="overflow-y-auto sm:max-w-md">
-          <SheetHeader>
-            <SheetTitle>{t('accounts.form.createTitle')}</SheetTitle>
-            <SheetDescription>{t('accounts.form.createHint')}</SheetDescription>
-          </SheetHeader>
-          <div className="px-4 pb-4">
-            {household ? (
-              <AccountForm
-                key={`create-${sheetOpen}`}
-                defaultSortOrder={nextSortOrder}
-                currency={household.currency}
-                timeZone={household.timezone}
-                submitting={submitting}
-                error={formError}
-                onSubmit={handleSubmit}
-                onCancel={() => setSheetOpen(false)}
-              />
-            ) : null}
-          </div>
+      <Sheet open={sheetOpen} onOpenChange={handleSheetOpenChange}>
+        <SheetContent
+          className="overflow-y-auto sm:max-w-md"
+          showCloseButton={!mutationBusy}
+        >
+          {sheetMode === 'create' ? (
+            <>
+              <SheetHeader>
+                <SheetTitle>{t('accounts.form.createTitle')}</SheetTitle>
+                <SheetDescription>
+                  {t('accounts.form.createHint')}
+                </SheetDescription>
+              </SheetHeader>
+              <div className="px-4 pb-4">
+                {household ? (
+                  <AccountForm
+                    key={`create-${sheetOpen}`}
+                    defaultSortOrder={nextSortOrder}
+                    currency={household.currency}
+                    timeZone={household.timezone}
+                    submitting={submitting}
+                    error={formError}
+                    onSubmit={handleSubmit}
+                    onCancel={closeSheet}
+                  />
+                ) : null}
+              </div>
+            </>
+          ) : (
+            <>
+              <SheetHeader>
+                <SheetTitle>{t('accounts.adjust.title')}</SheetTitle>
+                <SheetDescription>{t('accounts.adjust.hint')}</SheetDescription>
+              </SheetHeader>
+              <div className="px-4 pb-4">
+                <AdjustmentPanel
+                  key={`adjust-${formSession}`}
+                  accountName={selectedAccountName}
+                  snapshot={snapshot}
+                  snapshotLoading={snapshotLoading}
+                  snapshotError={snapshotError}
+                  onRetrySnapshot={() => {
+                    if (!selectedAccountId || isSheetFrozen()) {
+                      return
+                    }
+                    const requestId = ++adjustRequestRef.current
+                    invalidateDetailSelection()
+                    void loadSnapshot(selectedAccountId, requestId)
+                  }}
+                  submitting={submitting}
+                  formError={formError}
+                  balanceChanged={balanceChanged}
+                  onRefreshBalance={() => void handleRefreshBalance()}
+                  refreshing={refreshing}
+                  reloadError={reloadError}
+                  onRetryReload={() => void handleRetryReload()}
+                  submitLocked={Boolean(pendingToast)}
+                  voidLocked={voidLocked}
+                  onSubmit={handleReconcile}
+                  onCancel={closeSheet}
+                  history={history}
+                  historyLoading={historyLoading}
+                  historyError={historyError}
+                  onRetryHistory={() => {
+                    if (!selectedAccountId || isSheetFrozen()) {
+                      return
+                    }
+                    void loadHistory(
+                      selectedAccountId,
+                      adjustRequestRef.current,
+                    )
+                  }}
+                  selected={selectedAdjustment}
+                  selectedLoading={selectedLoading}
+                  selectedError={selectedError}
+                  onSelect={(row) => void handleSelectAdjustment(row)}
+                  voiding={voiding}
+                  onVoid={handleVoid}
+                />
+              </div>
+            </>
+          )}
         </SheetContent>
       </Sheet>
     </section>

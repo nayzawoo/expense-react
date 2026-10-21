@@ -29,14 +29,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
 import {
   Table,
   TableBody,
@@ -45,7 +45,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { CategoryIconView } from '@/lib/category-icons'
+import { CategoryIconView, iconKeyAriaLabel } from '@/lib/category-icons'
 import { cn } from '@/lib/utils'
 
 const selectClassName = cn(
@@ -53,7 +53,7 @@ const selectClassName = cn(
   'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm',
 )
 
-type SheetMode = 'create' | 'edit'
+type FormMode = 'create' | 'edit'
 type StatusFilter = 'ALL' | CategoryStatus
 
 function categoryErrorKey(err: unknown): string {
@@ -87,8 +87,8 @@ export function CategoriesPage() {
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
 
-  const [sheetOpen, setSheetOpen] = useState(false)
-  const [sheetMode, setSheetMode] = useState<SheetMode>('create')
+  const [formOpen, setFormOpen] = useState(false)
+  const [formMode, setFormMode] = useState<FormMode>('create')
   const [selected, setSelected] = useState<Category | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -131,17 +131,38 @@ export function CategoriesPage() {
   }, [categories])
 
   function openCreate() {
-    setSheetMode('create')
+    setFormMode('create')
     setSelected(null)
     setFormError(null)
-    setSheetOpen(true)
+    setFormOpen(true)
   }
 
   function openEdit(category: Category) {
-    setSheetMode('edit')
+    setFormMode('edit')
     setSelected(category)
     setFormError(null)
-    setSheetOpen(true)
+    setFormOpen(true)
+  }
+
+  function closeForm() {
+    if (submitting) {
+      return
+    }
+    setFormOpen(false)
+    setSelected(null)
+    setFormError(null)
+  }
+
+  function handleFormOpenChange(open: boolean, details?: { cancel: () => void }) {
+    if (open) {
+      setFormOpen(true)
+      return
+    }
+    if (submitting) {
+      details?.cancel()
+      return
+    }
+    closeForm()
   }
 
   async function handleSubmit(values: CategoryFormValues) {
@@ -153,14 +174,15 @@ export function CategoriesPage() {
     setSubmitting(true)
     setFormError(null)
     try {
-      if (sheetMode === 'create') {
+      if (formMode === 'create') {
         await createCategory(household.id, values)
         toast.success(t('common.toast.created'))
       } else if (selected) {
         await updateCategory(household.id, selected.id, values)
         toast.success(t('common.toast.updated'))
       }
-      setSheetOpen(false)
+      setFormOpen(false)
+      setSelected(null)
       await load()
     } catch (err) {
       setFormError(t(categoryErrorKey(err)))
@@ -284,17 +306,16 @@ export function CategoriesPage() {
                         <div className="font-medium">{category.name}</div>
                       </TableCell>
                       <TableCell>
-                        <span className="inline-flex items-center gap-2">
+                        <span
+                          className="inline-flex items-center"
+                          role="img"
+                          aria-label={iconKeyAriaLabel(category.iconKey)}
+                        >
                           <CategoryIconView
                             className="size-4"
                             iconKey={category.iconKey}
                             style={{ color: category.color }}
                           />
-                          <span className="text-muted-foreground">
-                            {t(`categories.icons.${category.iconKey}`, {
-                              defaultValue: category.iconKey,
-                            })}
-                          </span>
                         </span>
                       </TableCell>
                       <TableCell>
@@ -358,34 +379,39 @@ export function CategoriesPage() {
         </CardContent>
       </Card>
 
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent className="overflow-y-auto sm:max-w-md">
-          <SheetHeader>
-            <SheetTitle>
-              {sheetMode === 'create'
+      <Dialog
+        open={formOpen}
+        disablePointerDismissal={submitting}
+        onOpenChange={handleFormOpenChange}
+      >
+        <DialogContent
+          className="sm:max-w-md"
+          showCloseButton={!submitting}
+        >
+          <DialogHeader>
+            <DialogTitle>
+              {formMode === 'create'
                 ? t('categories.form.createTitle')
                 : t('categories.form.editTitle')}
-            </SheetTitle>
-            <SheetDescription>
-              {sheetMode === 'create'
+            </DialogTitle>
+            <DialogDescription>
+              {formMode === 'create'
                 ? t('categories.form.createHint')
                 : t('categories.form.editHint')}
-            </SheetDescription>
-          </SheetHeader>
-          <div className="px-4 pb-4">
-            <CategoryForm
-              key={`${sheetMode}-${selected?.id ?? 'new'}-${sheetOpen}`}
-              mode={sheetMode}
-              category={selected}
-              defaultSortOrder={nextSortOrder}
-              submitting={submitting}
-              error={formError}
-              onSubmit={handleSubmit}
-              onCancel={() => setSheetOpen(false)}
-            />
-          </div>
-        </SheetContent>
-      </Sheet>
+            </DialogDescription>
+          </DialogHeader>
+          <CategoryForm
+            key={`${formMode}-${selected?.id ?? 'new'}-${formOpen}`}
+            mode={formMode}
+            category={selected}
+            defaultSortOrder={nextSortOrder}
+            submitting={submitting}
+            error={formError}
+            onSubmit={handleSubmit}
+            onCancel={closeForm}
+          />
+        </DialogContent>
+      </Dialog>
     </section>
   )
 }

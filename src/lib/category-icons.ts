@@ -33,6 +33,14 @@ export function categoryIcon(iconKey: string): LucideIcon {
   return MoreHorizontal
 }
 
+/** Stable English accessible name from the backend icon key. Never localize. */
+export function iconKeyAriaLabel(iconKey: string): string {
+  if (!iconKey) {
+    return iconKey
+  }
+  return iconKey.charAt(0).toUpperCase() + iconKey.slice(1)
+}
+
 type CategoryIconViewProps = {
   iconKey: string
   className?: string

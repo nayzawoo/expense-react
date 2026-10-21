@@ -377,6 +377,31 @@ export const sampleAccounts: Account[] = [
   },
 ]
 
+export const sampleAdjustment = {
+  id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+  kind: 'ADJUSTMENT' as const,
+  state: 'POSTED',
+  effectiveDate: '2026-10-19',
+  amount: '-50',
+  currency: 'MMK',
+  reason: 'Counted cash drawer',
+  balanceBefore: '1250',
+  observedBalance: '1200',
+  observedBalanceVersion: 2,
+  account: {
+    id: sampleAccounts[0]!.id,
+    name: sampleAccounts[0]!.name,
+  },
+  createdBy: {
+    userId: sampleAdmin.id,
+    displayName: sampleAdmin.displayName,
+  },
+  recordedAt: '2026-10-19T10:00:00Z',
+  version: 0,
+  revisionNo: 1,
+  capabilities: { canVoid: true },
+}
+
 export const sampleCategories: Category[] = [
   {
     id: '66666666-6666-4666-8666-666666666666',

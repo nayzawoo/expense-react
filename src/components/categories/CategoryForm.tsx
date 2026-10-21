@@ -6,18 +6,11 @@ import {
   type Category,
   type CategoryWriteInput,
 } from '@/api/categories'
+import { CategoryIconPicker } from '@/components/categories/CategoryIconPicker'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { CategoryIconView } from '@/lib/category-icons'
-import { cn } from '@/lib/utils'
-
-const selectClassName = cn(
-  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base outline-none transition-colors',
-  'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50',
-  'disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 md:text-sm',
-)
 
 const DEFAULT_COLOR = '#64748B'
 
@@ -113,6 +106,7 @@ export function CategoryForm({
   }
 
   const displayError = localError ?? error
+  const previewColor = isHexColor(values.color) ? values.color : undefined
 
   return (
     <form className="grid gap-4" onSubmit={(event) => void handleSubmit(event)}>
@@ -173,33 +167,15 @@ export function CategoryForm({
 
       <div className="grid gap-2">
         <Label htmlFor="category-icon">{t('categories.fields.icon')}</Label>
-        <div className="flex items-center gap-2">
-          <span
-            className="flex size-8 items-center justify-center rounded-lg border border-input"
-            style={{ color: isHexColor(values.color) ? values.color : undefined }}
-            aria-hidden
-          >
-            <CategoryIconView iconKey={values.iconKey} className="size-4" />
-          </span>
-          <select
-            id="category-icon"
-            className={selectClassName}
-            value={values.iconKey}
-            disabled={submitting}
-            onChange={(event) =>
-              setValues((current) => ({
-                ...current,
-                iconKey: event.target.value,
-              }))
-            }
-          >
-            {CATEGORY_ICON_KEYS.map((key) => (
-              <option key={key} value={key}>
-                {t(`categories.icons.${key}`)}
-              </option>
-            ))}
-          </select>
-        </div>
+        <CategoryIconPicker
+          id="category-icon"
+          value={values.iconKey}
+          color={previewColor}
+          disabled={submitting}
+          onChange={(iconKey) =>
+            setValues((current) => ({ ...current, iconKey }))
+          }
+        />
       </div>
 
       <div className="grid gap-2">

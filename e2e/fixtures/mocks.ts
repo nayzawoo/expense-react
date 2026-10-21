@@ -11,6 +11,14 @@ export const sampleUser = {
   mustChangePassword: false,
 }
 
+export const sampleAdmin = {
+  id: '22222222-2222-4222-8222-222222222222',
+  email: 'admin@example.com',
+  displayName: 'Sample Admin',
+  role: 'ADMIN',
+  mustChangePassword: false,
+}
+
 export const sampleHousehold = {
   id: '33333333-3333-4333-8333-333333333333',
   name: 'Sample Household',
