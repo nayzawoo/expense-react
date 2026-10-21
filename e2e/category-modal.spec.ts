@@ -59,17 +59,8 @@ const commute: CategoryRow = {
   version: 0,
 }
 
-const ICON_LABELS = [
-  'Food',
-  'Transport',
-  'Home',
-  'Health',
-  'Shopping',
-  'Bills',
-  'Education',
-  'Entertainment',
-  'Other',
-]
+const LAST_ICON_KEY = 'subscriptions'
+const LAST_ICON_LABEL = 'Subscriptions'
 
 function json(route: Route, body: unknown, status = 200): Promise<void> {
   return route.fulfill({
@@ -189,8 +180,17 @@ async function mockCategorySession(
 }
 
 async function assertNoVisibleIconNames(page: Page): Promise<void> {
-  for (const label of ICON_LABELS) {
-    await expect(page.getByText(label, { exact: true })).toHaveCount(0)
+  const labeledIcons = page.locator(
+    '[data-icon-key], [role="img"][aria-label]',
+  )
+  const count = await labeledIcons.count()
+  expect(count).toBeGreaterThan(0)
+  for (let i = 0; i < count; i++) {
+    const el = labeledIcons.nth(i)
+    const aria = (await el.getAttribute('aria-label')) ?? ''
+    const visibleName = aria.replace(/^Choose icon \((.+)\)$/, '$1')
+    await expect(el).not.toHaveText(visibleName)
+    await expect(el.getByText(visibleName, { exact: true })).toHaveCount(0)
   }
 }
 
@@ -345,5 +345,63 @@ test.describe('category modal', () => {
       viewport!.height + 1,
     )
     await expect(picker.getByRole('button', { name: 'Health' })).toBeVisible()
+  })
+
+  test('admin can save the last picker icon and reopen it selected', async ({
+    page,
+  }) => {
+    const { creates } = await mockCategorySession(page, 'ADMIN')
+    await page.goto('/categories')
+
+    await expect(page.getByText('Groceries')).toBeVisible()
+    await page.getByRole('button', { name: 'Add category' }).click()
+
+    const form = page.getByRole('dialog', { name: 'Add category' })
+    await form.getByLabel('Name').fill('Streaming')
+    const trigger = form.getByRole('button', { name: /Choose icon/ })
+    await trigger.click()
+
+    const picker = page.getByRole('dialog', { name: 'Choose an icon' })
+    await expect(picker).toBeVisible()
+    await expect(
+      picker.getByRole('button', { name: 'Other' }),
+    ).toBeFocused()
+    await page.keyboard.press('End')
+    const lastIcon = picker.getByRole('button', { name: LAST_ICON_LABEL })
+    await expect(lastIcon).toBeFocused()
+    await expect(lastIcon).toHaveAttribute('data-icon-key', LAST_ICON_KEY)
+    await lastIcon.click()
+    await expect(picker).toBeHidden()
+    await expect(
+      form.getByRole('button', { name: `Choose icon (${LAST_ICON_LABEL})` }),
+    ).toHaveAttribute('data-icon-key', LAST_ICON_KEY)
+
+    await form.getByRole('button', { name: 'Save category' }).click()
+    await expect(page.getByText('Streaming')).toBeVisible()
+    expect(creates).toEqual([
+      {
+        name: 'Streaming',
+        color: '#64748B',
+        iconKey: LAST_ICON_KEY,
+        sortOrder: 3,
+      },
+    ])
+
+    const streamingRow = page.getByRole('row').filter({ hasText: 'Streaming' })
+    await expect(
+      streamingRow.getByRole('img', { name: LAST_ICON_LABEL }),
+    ).toBeVisible()
+    await streamingRow.getByRole('button', { name: 'Edit' }).click()
+
+    const edit = page.getByRole('dialog', { name: 'Edit category' })
+    await expect(
+      edit.getByRole('button', { name: `Choose icon (${LAST_ICON_LABEL})` }),
+    ).toHaveAttribute('data-icon-key', LAST_ICON_KEY)
+    await edit.getByRole('button', { name: /Choose icon/ }).click()
+    const editPicker = page.getByRole('dialog', { name: 'Choose an icon' })
+    const selected = editPicker.getByRole('button', { name: LAST_ICON_LABEL })
+    await expect(selected).toHaveAttribute('data-selected', 'true')
+    await expect(selected).toBeFocused()
+    await expect(selected).toHaveAttribute('data-icon-key', LAST_ICON_KEY)
   })
 })

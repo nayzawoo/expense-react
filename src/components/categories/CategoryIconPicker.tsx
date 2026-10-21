@@ -18,7 +18,7 @@ import {
 import { CategoryIconView, iconKeyAriaLabel } from '@/lib/category-icons'
 import { cn } from '@/lib/utils'
 
-const ICON_GRID_COLUMNS = 3
+const ICON_GRID_COLUMNS = 5
 
 type CategoryIconPickerProps = {
   id?: string
@@ -93,6 +93,7 @@ export function CategoryIconPicker({
       `[data-icon-key="${nextKey}"]`,
     )
     next?.focus()
+    next?.scrollIntoView?.({ block: 'nearest' })
   }
 
   return (
@@ -116,11 +117,12 @@ export function CategoryIconPicker({
       </DialogTrigger>
       <DialogContent
         data-category-icon-picker=""
-        className="sm:max-w-xs"
+        className="grid max-h-[min(40rem,calc(100dvh-2rem))] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden sm:max-w-xs"
         initialFocus={() => {
           const selected = document.querySelector<HTMLElement>(
             '[data-category-icon-picker] [data-selected="true"]',
           )
+          selected?.scrollIntoView?.({ block: 'nearest' })
           return selected ?? true
         }}
       >
@@ -130,7 +132,7 @@ export function CategoryIconPicker({
         <div
           role="group"
           aria-label={t('categories.form.iconPickerTitle')}
-          className="grid grid-cols-3 gap-2"
+          className="grid min-h-0 grid-cols-5 gap-1.5 overflow-y-auto overscroll-contain py-0.5"
           onKeyDown={handleGridKeyDown}
         >
           {CATEGORY_ICON_KEYS.map((key) => {

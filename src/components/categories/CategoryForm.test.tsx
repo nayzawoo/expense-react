@@ -2,21 +2,15 @@ import { describe, expect, it, vi } from 'vitest'
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
+import { CATEGORY_ICON_KEYS } from '@/api/categories'
 import { CategoryForm } from '@/components/categories/CategoryForm'
+import { iconKeyAriaLabel } from '@/lib/category-icons'
 import { sampleCategories } from '@/test/fixtures'
 import { renderWithProviders } from '@/test/render'
 
-const VISIBLE_ICON_NAMES = [
-  'Food',
-  'Transport',
-  'Home',
-  'Health',
-  'Shopping',
-  'Bills',
-  'Education',
-  'Entertainment',
-  'Other',
-]
+const VISIBLE_ICON_NAMES = CATEGORY_ICON_KEYS.map(iconKeyAriaLabel)
+const LAST_ICON_KEY = CATEGORY_ICON_KEYS.at(-1)!
+const LAST_ICON_LABEL = iconKeyAriaLabel(LAST_ICON_KEY)
 
 function renderCreate(
   overrides: Partial<Parameters<typeof CategoryForm>[0]> = {},
@@ -171,6 +165,63 @@ describe('CategoryForm', () => {
         color: '#112233',
         iconKey: 'transport',
         sortOrder: 2,
+      })
+    })
+  })
+
+  it('saves an end-of-grid icon and restores it when the picker reopens', async () => {
+    const user = userEvent.setup()
+    const { onSubmit } = renderCreate()
+
+    await user.type(screen.getByLabelText('Name'), 'Streaming')
+    const trigger = screen.getByRole('button', { name: /Choose icon \(Other\)/ })
+    await user.click(trigger)
+
+    const picker = await screen.findByRole('dialog', { name: 'Choose an icon' })
+    await waitFor(() => {
+      expect(within(picker).getByRole('button', { name: 'Other' })).toHaveFocus()
+    })
+    await user.keyboard('{End}')
+    const lastIcon = within(picker).getByRole('button', { name: LAST_ICON_LABEL })
+    expect(lastIcon).toHaveFocus()
+    expect(lastIcon).toHaveAttribute('data-icon-key', LAST_ICON_KEY)
+    await user.keyboard('{ArrowUp}')
+    expect(
+      within(picker).getByRole('button', { name: 'Family' }),
+    ).toHaveFocus()
+    await user.keyboard('{End}')
+    await user.click(lastIcon)
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('dialog', { name: 'Choose an icon' }),
+      ).not.toBeInTheDocument()
+    })
+    expect(
+      screen.getByRole('button', { name: new RegExp(`Choose icon \\(${LAST_ICON_LABEL}\\)`) }),
+    ).toHaveAttribute('data-icon-key', LAST_ICON_KEY)
+
+    await user.click(
+      screen.getByRole('button', {
+        name: new RegExp(`Choose icon \\(${LAST_ICON_LABEL}\\)`),
+      }),
+    )
+    const reopened = await screen.findByRole('dialog', { name: 'Choose an icon' })
+    const selected = within(reopened).getByRole('button', { name: LAST_ICON_LABEL })
+    expect(selected).toHaveAttribute('data-selected', 'true')
+    expect(selected).toHaveAttribute('data-icon-key', LAST_ICON_KEY)
+    await waitFor(() => {
+      expect(selected).toHaveFocus()
+    })
+    await user.keyboard('{Escape}')
+
+    await user.click(screen.getByRole('button', { name: 'Save category' }))
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: 'Streaming',
+        color: '#64748B',
+        iconKey: LAST_ICON_KEY,
+        sortOrder: 3,
       })
     })
   })
