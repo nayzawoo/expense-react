@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -12,12 +12,11 @@ import { useTranslation } from 'react-i18next'
 
 import { isApiError } from '@/api/errors'
 import { fetchAnalytics } from '@/api/reports'
-import type {
-  AnalyticsSnapshot,
-  CategoryChangeRow,
-  MonthTrendPoint,
-} from '@/api/types'
+import type { AnalyticsSnapshot, CategoryChangeRow } from '@/api/types'
 import { useAuth } from '@/auth/useAuth'
+import { CategoryChangesChart } from '@/components/charts/CategoryChangesChart'
+import { CategoryShareChart } from '@/components/charts/CategoryShareChart'
+import { MonthlyTrendChart } from '@/components/charts/MonthlyTrendChart'
 import { PageEmptyState } from '@/components/PageEmptyState'
 import { PageErrorAlert } from '@/components/PageErrorAlert'
 import { PageLoading } from '@/components/PageLoading'
@@ -43,20 +42,6 @@ import {
 } from '@/components/ui/table'
 import { formatMoney } from '@/lib/money'
 import { cn } from '@/lib/utils'
-
-function trendMaxExpense(points: MonthTrendPoint[]): number {
-  let max = 0
-  for (const point of points) {
-    if (point.expense == null) {
-      continue
-    }
-    const value = Number(point.expense)
-    if (Number.isFinite(value) && value > max) {
-      max = value
-    }
-  }
-  return max
-}
 
 function coverageLabel(
   complete: boolean,
@@ -87,6 +72,7 @@ export function ReportsPage() {
   const [loading, setLoading] = useState(true)
   const [asOfDraft, setAsOfDraft] = useState('')
   const [asOfApplied, setAsOfApplied] = useState<string | undefined>(undefined)
+  const loadGeneration = useRef(0)
 
   const load = useCallback(async () => {
     if (!household) {
@@ -96,13 +82,20 @@ export function ReportsPage() {
       return
     }
 
+    const requestId = ++loadGeneration.current
     setLoading(true)
     setError(null)
     try {
       const snapshot = await fetchAnalytics(household.id, asOfApplied)
+      if (requestId !== loadGeneration.current) {
+        return
+      }
       setAnalytics(snapshot)
       setAsOfDraft(snapshot.asOf)
     } catch (err) {
+      if (requestId !== loadGeneration.current) {
+        return
+      }
       setAnalytics(null)
       if (err instanceof TypeError) {
         setError(t('common.offlineOrApi'))
@@ -112,7 +105,9 @@ export function ReportsPage() {
         setError(t('reports.loadError'))
       }
     } finally {
-      setLoading(false)
+      if (requestId === loadGeneration.current) {
+        setLoading(false)
+      }
     }
   }, [asOfApplied, household, t])
 
@@ -121,10 +116,6 @@ export function ReportsPage() {
   }, [load])
 
   const currency = analytics?.currency ?? household?.currency ?? ''
-  const maxTrend = useMemo(
-    () => (analytics ? trendMaxExpense(analytics.monthlyTrend) : 0),
-    [analytics],
-  )
 
   function applyAsOf() {
     const next = asOfDraft.trim()
@@ -137,7 +128,7 @@ export function ReportsPage() {
   }
 
   return (
-    <section className="grid gap-4">
+    <section className="grid min-w-0 gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -282,75 +273,33 @@ export function ReportsPage() {
 
       <InsightCard loading={loading} analytics={analytics} currency={currency} />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="size-4" aria-hidden />
-              {t('reports.monthlyTrend')}
-            </CardTitle>
-            <CardDescription>{t('reports.monthlyTrendHint')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <PageLoading />
-            ) : analytics && analytics.monthlyTrend.length > 0 ? (
-              <ul className="grid gap-3">
-                {analytics.monthlyTrend.map((point) => {
-                  const amount =
-                    point.expense == null ? 0 : Number(point.expense)
-                  const width =
-                    maxTrend > 0 && Number.isFinite(amount)
-                      ? Math.max(4, Math.round((amount / maxTrend) * 100))
-                      : 0
-                  return (
-                    <li key={point.month} className="grid gap-1.5">
-                      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-medium">{point.month}</span>
-                          {point.isPartial ? (
-                            <Badge variant="outline">
-                              {t('reports.partialMonth')}
-                            </Badge>
-                          ) : null}
-                          <Badge
-                            variant={
-                              point.coverage === 'COMPLETE'
-                                ? 'secondary'
-                                : 'outline'
-                            }
-                          >
-                            {t(`reports.monthCoverage.${point.coverage}`, {
-                              defaultValue: point.coverage,
-                            })}
-                          </Badge>
-                        </div>
-                        <span className="tabular-nums text-muted-foreground">
-                          {point.expense == null
-                            ? t('reports.notAvailable')
-                            : formatMoney(point.expense, currency)}
-                        </span>
-                      </div>
-                      <div className="h-2 overflow-hidden rounded-full bg-muted">
-                        <div
-                          className="h-full rounded-full bg-primary/80"
-                          style={{ width: `${width}%` }}
-                        />
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
-            ) : (
-              <PageEmptyState
-                icon={BarChart3}
-                message={t('reports.monthlyTrendEmpty')}
-              />
-            )}
-          </CardContent>
-        </Card>
+      <Card className="min-w-0 overflow-visible">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="size-4" aria-hidden />
+            {t('reports.monthlyTrend')}
+          </CardTitle>
+          <CardDescription>{t('reports.monthlyTrendHint')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <PageLoading />
+          ) : analytics ? (
+            <MonthlyTrendChart
+              points={analytics.monthlyTrend}
+              currency={currency}
+            />
+          ) : (
+            <PageEmptyState
+              icon={BarChart3}
+              message={t('reports.monthlyTrendEmpty')}
+            />
+          )}
+        </CardContent>
+      </Card>
 
-        <Card>
+      <div className="grid min-w-0 gap-4 lg:grid-cols-2">
+        <Card className="min-w-0 overflow-visible">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <PieChart className="size-4" aria-hidden />
@@ -360,38 +309,48 @@ export function ReportsPage() {
               {t('reports.categoryBreakdownHint')}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="grid gap-4">
             {loading ? (
               <PageLoading />
-            ) : analytics && analytics.categoryBreakdown.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('reports.fields.category')}</TableHead>
-                    <TableHead className="text-right">
-                      {t('reports.fields.amount')}
-                    </TableHead>
-                    <TableHead className="text-right">
-                      {t('reports.fields.share')}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {analytics.categoryBreakdown.map((row) => (
-                    <TableRow key={row.category.id}>
-                      <TableCell className="font-medium">
-                        {row.category.name}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatMoney(row.amount, currency)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {row.sharePercent}%
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            ) : analytics ? (
+              <>
+                <CategoryShareChart
+                  rows={analytics.categoryBreakdown}
+                  currency={currency}
+                  title={t('reports.categoryBreakdown')}
+                  emptyLabel={t('reports.categoryBreakdownEmpty')}
+                />
+                {analytics.categoryBreakdown.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t('reports.fields.category')}</TableHead>
+                        <TableHead className="text-right">
+                          {t('reports.fields.amount')}
+                        </TableHead>
+                        <TableHead className="text-right">
+                          {t('reports.fields.share')}
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {analytics.categoryBreakdown.map((row) => (
+                        <TableRow key={row.category.id}>
+                          <TableCell className="font-medium">
+                            {row.category.name}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {formatMoney(row.amount, currency)}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {row.sharePercent}%
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : null}
+              </>
             ) : (
               <PageEmptyState
                 icon={PieChart}
@@ -400,9 +359,34 @@ export function ReportsPage() {
             )}
           </CardContent>
         </Card>
+
+        <Card className="min-w-0 overflow-visible">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="size-4" aria-hidden />
+              {t('reports.categoryChanges')}
+            </CardTitle>
+            <CardDescription>{t('reports.categoryChangesHint')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <PageLoading />
+            ) : analytics ? (
+              <CategoryChangesChart
+                changes={analytics.categoryChanges}
+                currency={currency}
+              />
+            ) : (
+              <PageEmptyState
+                icon={PieChart}
+                message={t('reports.changesEmpty')}
+              />
+            )}
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid min-w-0 gap-4 lg:grid-cols-2">
         <CategoryChangesCard
           loading={loading}
           title={t('reports.increased')}
@@ -542,6 +526,9 @@ function CategoryChangesCard({
                   {t('reports.fields.current')}
                 </TableHead>
                 <TableHead className="text-right">
+                  {t('reports.fields.previous')}
+                </TableHead>
+                <TableHead className="text-right">
                   {t('reports.fields.change')}
                 </TableHead>
               </TableRow>
@@ -559,6 +546,9 @@ function CategoryChangesCard({
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
                     {formatMoney(row.currentAmount, currency)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatMoney(row.previousAmount, currency)}
                   </TableCell>
                   <TableCell
                     className={cn(

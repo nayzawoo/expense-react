@@ -52,6 +52,19 @@
     "periodRange": "{{from}} – {{to}}",
     "asOf": "As of {{date}}",
     "elapsedAverage": "Avg {{amount}} / day so far",
+    "spendingPace": "Spending pace",
+    "spendingPaceHint": "Cumulative expense so far this month versus the same days last month.",
+    "spendingPaceEmpty": "No spending-pace points for this period.",
+    "comparisonIncomplete": "Previous-month comparison is omitted because coverage is incomplete.",
+    "categoryBreakdown": "Spending by category",
+    "categoryBreakdownHint": "Current-period expense share.",
+    "categoryBreakdownEmpty": "No category spending to chart for this period.",
+    "incomeExpense": "Income and expense",
+    "incomeExpenseHint": "Posted income versus expense for the current period. Transfers are not included.",
+    "incomeExpenseEmpty": "No income or expense totals to chart.",
+    "beneficiarySpending": "Spending by beneficiary",
+    "beneficiarySpendingHint": "Expense totals for the current period.",
+    "beneficiarySpendingEmpty": "No beneficiary spending to chart for this period.",
     "activity": {
       "transferBetween": "{{from}} → {{to}}",
       "kinds": {
@@ -412,12 +425,15 @@
     "decreased": "Categories down",
     "decreasedHint": "Largest spending decreases versus the comparison period.",
     "changesEmpty": "No category changes to show.",
+    "categoryChanges": "Category changes",
+    "categoryChangesHint": "Largest category increases and decreases versus the previous period. Up to three increases and three decreases.",
     "newCategory": "New",
     "fields": {
       "category": "Category",
       "amount": "Amount",
       "share": "Share",
       "current": "Current",
+      "previous": "Previous",
       "change": "Change"
     },
     "insight": {
@@ -535,6 +551,19 @@
     "failed": "Could not update the password.",
     "tooShort": "New password must be at least 8 characters.",
     "required": "Fill in both password fields."
+  },
+  "charts": {
+    "notAvailable": "Not available",
+    "series": {
+      "current": "Current",
+      "previous": "Previous",
+      "expense": "Expense",
+      "income": "Income",
+      "amount": "Amount",
+      "share": "Share",
+      "difference": "Change",
+      "day": "Day"
+    }
   },
   "common": {
     "comingSoon": "Coming soon",

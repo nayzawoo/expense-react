@@ -94,6 +94,63 @@ export const sampleDashboard: DashboardSnapshot = {
     previousFiveMonthAverage: null,
     elapsedDayAverage: '18',
   },
+  spendingPace: [
+    {
+      day: 1,
+      currentCumulative: '0',
+      previousCumulative: '40',
+      expense: '0',
+    },
+    {
+      day: 2,
+      currentCumulative: '50',
+      previousCumulative: '90',
+      expense: '50',
+    },
+    {
+      day: 3,
+      currentCumulative: '200',
+      previousCumulative: '140',
+      expense: '150',
+    },
+    {
+      day: 19,
+      currentCumulative: '350',
+      previousCumulative: '200',
+      expense: '50',
+    },
+  ],
+  categoryBreakdown: [
+    {
+      category: {
+        id: '66666666-6666-4666-8666-666666666666',
+        name: 'Food',
+      },
+      amount: '200',
+      sharePercent: '57.1',
+    },
+    {
+      category: {
+        id: '77777777-7777-4777-8777-777777777777',
+        name: 'Transport',
+      },
+      amount: '150',
+      sharePercent: '42.9',
+    },
+  ],
+  categoryChanges: {
+    increased: [],
+    decreased: [],
+  },
+  beneficiarySpending: [
+    {
+      beneficiary: {
+        id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+        name: 'Family Pool',
+      },
+      amount: '350',
+    },
+  ],
   recentActivity: [
     {
       id: '66666666-6666-4666-8666-666666666666',
@@ -189,9 +246,9 @@ export const sampleAnalytics: AnalyticsSnapshot = {
   monthlyTrend: [
     {
       month: '2026-05',
-      expense: '400',
+      expense: null,
       isPartial: false,
-      coverage: 'COMPLETE',
+      coverage: 'UNCOVERED',
     },
     {
       month: '2026-06',

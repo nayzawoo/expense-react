@@ -46,14 +46,26 @@ describe('DashboardPage', () => {
     renderWithProviders(<DashboardPage />)
 
     expect(await screen.findByText('1,200 MMK')).toBeInTheDocument()
-    expect(screen.getByText('350 MMK')).toBeInTheDocument()
-    expect(screen.getByText('500 MMK')).toBeInTheDocument()
-    expect(screen.getByText('150 MMK')).toBeInTheDocument()
+    expect(screen.getAllByText('350 MMK').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('500 MMK').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('150 MMK').length).toBeGreaterThan(0)
     expect(screen.getByText('1,250 MMK')).toBeInTheDocument()
     expect(screen.getByText('-50 MMK')).toBeInTheDocument()
     expect(screen.getByText(/Groceries/)).toBeInTheDocument()
     expect(screen.getByText('Cash → Wallet')).toBeInTheDocument()
     expect(screen.getByText(/2026-10-01 – 2026-10-19/)).toBeInTheDocument()
+    expect(screen.getAllByText('Spending pace').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Spending by category').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Income and expense').length).toBeGreaterThan(0)
+    expect(
+      document.querySelector('[data-chart="spending-pace"] svg'),
+    ).toBeTruthy()
+    expect(
+      document.querySelector('[data-chart="category-share"] svg'),
+    ).toBeTruthy()
+    expect(
+      document.querySelector('[data-chart="income-expense"] svg'),
+    ).toBeTruthy()
     expect(fetchDashboardMock).toHaveBeenCalledWith(sampleHousehold.id)
   })
 
@@ -63,6 +75,9 @@ describe('DashboardPage', () => {
       ...sampleDashboard,
       accounts: [],
       recentActivity: [],
+      spendingPace: [],
+      categoryBreakdown: [],
+      beneficiarySpending: [],
     })
 
     renderWithProviders(<DashboardPage />)
@@ -72,6 +87,12 @@ describe('DashboardPage', () => {
     ).toBeInTheDocument()
     expect(
       screen.getByText('No recent activity in this period.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('No spending-pace points for this period.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('No category spending to chart for this period.'),
     ).toBeInTheDocument()
   })
 

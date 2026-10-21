@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowDownRight,
@@ -6,6 +6,7 @@ import {
   ArrowUpRight,
   PlusCircle,
   Receipt,
+  Users,
   Wallet,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -14,6 +15,9 @@ import { fetchDashboard } from '@/api/dashboard'
 import { isApiError } from '@/api/errors'
 import type { DashboardActivity, DashboardSnapshot } from '@/api/types'
 import { useAuth } from '@/auth/useAuth'
+import { CategoryShareChart } from '@/components/charts/CategoryShareChart'
+import { MoneyBarChart } from '@/components/charts/MoneyBarChart'
+import { SpendingPaceChart } from '@/components/charts/SpendingPaceChart'
 import { PageEmptyState } from '@/components/PageEmptyState'
 import { PageErrorAlert } from '@/components/PageErrorAlert'
 import { PageLoading } from '@/components/PageLoading'
@@ -35,6 +39,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { toBeneficiaryBarPoints, toIncomeExpensePoints } from '@/lib/chart-data'
 import { formatMoney } from '@/lib/money'
 import { cn } from '@/lib/utils'
 
@@ -64,6 +69,7 @@ export function DashboardPage() {
   const [dashboard, setDashboard] = useState<DashboardSnapshot | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const loadGeneration = useRef(0)
 
   const load = useCallback(async () => {
     if (!household) {
@@ -73,12 +79,19 @@ export function DashboardPage() {
       return
     }
 
+    const requestId = ++loadGeneration.current
     setLoading(true)
     setError(null)
     try {
       const snapshot = await fetchDashboard(household.id)
+      if (requestId !== loadGeneration.current) {
+        return
+      }
       setDashboard(snapshot)
     } catch (err) {
+      if (requestId !== loadGeneration.current) {
+        return
+      }
       setDashboard(null)
       if (err instanceof TypeError) {
         setError(t('common.offlineOrApi'))
@@ -88,7 +101,9 @@ export function DashboardPage() {
         setError(t('dashboard.loadError'))
       }
     } finally {
-      setLoading(false)
+      if (requestId === loadGeneration.current) {
+        setLoading(false)
+      }
     }
   }, [household, t])
 
@@ -99,7 +114,7 @@ export function DashboardPage() {
   const currency = dashboard?.currency ?? household?.currency ?? ''
 
   return (
-    <section className="grid gap-4">
+    <section className="grid min-w-0 gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -185,7 +200,113 @@ export function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <Card className="min-w-0 overflow-visible">
+        <CardHeader>
+          <CardTitle>{t('dashboard.spendingPace')}</CardTitle>
+          <CardDescription>{t('dashboard.spendingPaceHint')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <PageLoading />
+          ) : dashboard ? (
+            <SpendingPaceChart
+              points={dashboard.spendingPace}
+              comparisonComplete={dashboard.comparisonPeriod.coverage.complete}
+              currency={currency}
+            />
+          ) : null}
+        </CardContent>
+      </Card>
+
+      <div className="grid min-w-0 gap-4 lg:grid-cols-2">
+        <Card className="min-w-0 overflow-visible">
+          <CardHeader>
+            <CardTitle>{t('dashboard.categoryBreakdown')}</CardTitle>
+            <CardDescription>
+              {t('dashboard.categoryBreakdownHint')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <PageLoading />
+            ) : dashboard ? (
+              <CategoryShareChart
+                rows={dashboard.categoryBreakdown}
+                currency={currency}
+                title={t('dashboard.categoryBreakdown')}
+                emptyLabel={t('dashboard.categoryBreakdownEmpty')}
+              />
+            ) : null}
+          </CardContent>
+        </Card>
+
+        <Card className="min-w-0 overflow-visible">
+          <CardHeader>
+            <CardTitle>{t('dashboard.incomeExpense')}</CardTitle>
+            <CardDescription>{t('dashboard.incomeExpenseHint')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <PageLoading />
+            ) : dashboard ? (
+              <MoneyBarChart
+                items={toIncomeExpensePoints(dashboard.overview, currency, {
+                  income: t('dashboard.income'),
+                  expense: t('dashboard.expense'),
+                })}
+                currency={currency}
+                title={t('dashboard.incomeExpense')}
+                emptyLabel={t('dashboard.incomeExpenseEmpty')}
+                layout="horizontal"
+                chartName="income-expense"
+              />
+            ) : null}
+          </CardContent>
+        </Card>
+      </div>
+
+      {loading ? (
+        <Card className="min-w-0">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="size-4" aria-hidden />
+              {t('dashboard.beneficiarySpending')}
+            </CardTitle>
+            <CardDescription>
+              {t('dashboard.beneficiarySpendingHint')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PageLoading />
+          </CardContent>
+        </Card>
+      ) : dashboard && dashboard.beneficiarySpending.length > 0 ? (
+        <Card className="min-w-0 overflow-visible">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="size-4" aria-hidden />
+              {t('dashboard.beneficiarySpending')}
+            </CardTitle>
+            <CardDescription>
+              {t('dashboard.beneficiarySpendingHint')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <MoneyBarChart
+              items={toBeneficiaryBarPoints(
+                dashboard.beneficiarySpending,
+                currency,
+              )}
+              currency={currency}
+              title={t('dashboard.beneficiarySpending')}
+              emptyLabel={t('dashboard.beneficiarySpendingEmpty')}
+              chartName="beneficiary-spending"
+            />
+          </CardContent>
+        </Card>
+      ) : null}
+
+      <div className="grid min-w-0 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
             <div className="space-y-1.5">

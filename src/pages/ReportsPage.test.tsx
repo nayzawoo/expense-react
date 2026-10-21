@@ -54,8 +54,25 @@ describe('ReportsPage', () => {
     expect(screen.getByText(/As of 2026-10-19/)).toBeInTheDocument()
     expect(screen.getAllByText('Food').length).toBeGreaterThan(0)
     expect(screen.getByText('62.5%')).toBeInTheDocument()
-    expect(screen.getByText('2026-10')).toBeInTheDocument()
+    expect(screen.getAllByText('2026-10').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('2026-05').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Not available').length).toBeGreaterThan(0)
     expect(screen.getByText(/spending is up/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Largest category increases and decreases versus the previous period. Up to three increases and three decreases.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/supplied by the API/i)).not.toBeInTheDocument()
+    expect(
+      document.querySelector('[data-chart="monthly-trend"] svg'),
+    ).toBeTruthy()
+    expect(
+      document.querySelector('[data-chart="category-share"] svg'),
+    ).toBeTruthy()
+    expect(
+      document.querySelector('[data-chart="category-changes"] svg'),
+    ).toBeTruthy()
     expect(fetchAnalyticsMock).toHaveBeenCalledWith(
       sampleHousehold.id,
       undefined,
@@ -115,6 +132,60 @@ describe('ReportsPage', () => {
         '2026-10-10',
       )
     })
+  })
+
+  it('ignores a slower older as-of response so charts stay on the newer period', async () => {
+    useAuthMock.mockReturnValue(authValue())
+    let resolveOlder: (value: typeof sampleAnalytics) => void = () => {}
+    const olderRequest = new Promise<typeof sampleAnalytics>((resolve) => {
+      resolveOlder = resolve
+    })
+    fetchAnalyticsMock
+      .mockReturnValueOnce(olderRequest)
+      .mockResolvedValueOnce({
+        ...sampleAnalytics,
+        asOf: '2026-09-30',
+        period: {
+          ...sampleAnalytics.period,
+          from: '2026-09-01',
+          to: '2026-09-30',
+        },
+        overview: {
+          ...sampleAnalytics.overview,
+          expense: '100',
+        },
+        monthlyTrend: [
+          {
+            month: '2026-09',
+            expense: '100',
+            isPartial: false,
+            coverage: 'COMPLETE',
+          },
+        ],
+      })
+
+    renderWithProviders(<ReportsPage />)
+
+    await waitFor(() => {
+      expect(fetchAnalyticsMock).toHaveBeenCalledTimes(1)
+    })
+
+    const asOf = await screen.findByLabelText('As of date')
+    fireEvent.change(asOf, { target: { value: '2026-09-30' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Apply date' }))
+
+    await waitFor(() => {
+      expect(fetchAnalyticsMock).toHaveBeenCalledTimes(2)
+    })
+
+    resolveOlder(sampleAnalytics)
+
+    await waitFor(() => {
+      expect(screen.getByText(/As of 2026-09-30/)).toBeInTheDocument()
+    })
+    expect(screen.queryByText(/As of 2026-10-19/)).not.toBeInTheDocument()
+    expect(screen.getAllByText('100 MMK').length).toBeGreaterThan(0)
+    expect(screen.queryByText('800 MMK')).not.toBeInTheDocument()
   })
 
   it('surfaces a load error when household context is missing', async () => {

@@ -100,6 +100,18 @@ export type DashboardActivity = {
   destinationAccount: NamedRef | null
 }
 
+export type SpendingPacePoint = {
+  day: number
+  currentCumulative: string | null
+  previousCumulative: string | null
+  expense: string | null
+}
+
+export type BeneficiarySpendingRow = {
+  beneficiary: NamedRef
+  amount: string
+}
+
 export type DashboardSnapshot = {
   currency: string
   timeZone: string
@@ -110,6 +122,10 @@ export type DashboardSnapshot = {
   totalBalance: string
   accounts: DashboardAccountBalance[]
   overview: DashboardOverview
+  spendingPace: SpendingPacePoint[]
+  categoryBreakdown: CategoryBreakdownRow[]
+  categoryChanges: CategoryChanges
+  beneficiarySpending: BeneficiarySpendingRow[]
   recentActivity: DashboardActivity[]
 }
 

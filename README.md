@@ -11,6 +11,7 @@ React browser client for the Spring household expense API.
 - i18next (`en` / `my`) with localStorage language preference
 - Light / dark / system theme (`expense_theme` in localStorage; `dark` class on `html`)
 - Shared page loading / error / empty helpers for list views
+- Recharts visualizations on the dashboard and reports pages
 - Session + CSRF calls to the Spring API (`credentials: 'include'`)
 
 ## Quick start
