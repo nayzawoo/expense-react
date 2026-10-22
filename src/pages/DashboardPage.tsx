@@ -4,7 +4,6 @@ import {
   ArrowDownRight,
   ArrowLeftRight,
   ArrowUpRight,
-  PlusCircle,
   Receipt,
   Users,
   Wallet,
@@ -18,6 +17,7 @@ import { useAuth } from '@/auth/useAuth'
 import { CategoryShareChart } from '@/components/charts/CategoryShareChart'
 import { MoneyBarChart } from '@/components/charts/MoneyBarChart'
 import { SpendingPaceChart } from '@/components/charts/SpendingPaceChart'
+import { CreateExpenseDialog } from '@/components/expenses/CreateExpenseDialog'
 import { PageEmptyState } from '@/components/PageEmptyState'
 import { PageErrorAlert } from '@/components/PageErrorAlert'
 import { PageLoading } from '@/components/PageLoading'
@@ -136,10 +136,7 @@ export function DashboardPage() {
             </p>
           ) : null}
         </div>
-        <Link to="/expenses" className={cn(buttonVariants())}>
-          <PlusCircle data-icon="inline-start" />
-          {t('dashboard.quickAdd')}
-        </Link>
+        <CreateExpenseDialog onCreated={load} />
       </div>
 
       {error ? (
