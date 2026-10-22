@@ -80,7 +80,7 @@ describe('RequireAuth', () => {
     expect(screen.getByText('Accounts page')).toBeInTheDocument()
   })
 
-  it('sends users who already changed their password away from the gate', () => {
+  it('lets ordinary members open their own password change page', () => {
     useAuthMock.mockReturnValue(
       authValue({
         status: 'authenticated',
@@ -88,6 +88,6 @@ describe('RequireAuth', () => {
       }),
     )
     renderGate('/change-password')
-    expect(screen.getByText('Home page')).toBeInTheDocument()
+    expect(screen.getByText('Password page')).toBeInTheDocument()
   })
 })

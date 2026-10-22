@@ -1,4 +1,4 @@
-import { createElement, type CSSProperties, type ReactElement } from 'react'
+import { createElement, lazy, Suspense, type CSSProperties, type ReactElement } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
   Banknote,
@@ -33,7 +33,18 @@ import {
   Wifi,
 } from 'lucide-react'
 
-import type { CategoryIconKey } from '@/api/categories'
+import { CATEGORY_ICON_KEYS, type CategoryIconKey } from '@/api/categories'
+import lucideNames from '@/lib/lucide-icon-names.json'
+
+const lucideNameSet = new Set<string>(lucideNames)
+const LazyDynamicIcon = lazy(() => import('lucide-react/dynamic').then((module) => ({ default: module.DynamicIcon })))
+export const ALL_CATEGORY_ICON_KEYS: readonly string[] = [
+  ...CATEGORY_ICON_KEYS,
+  ...lucideNames.map((name) => `lucide:${name}`),
+]
+export function isCategoryIconKey(key: string): boolean {
+  return Object.hasOwn(CATEGORY_ICON_MAP, key) || (key.startsWith('lucide:') && lucideNameSet.has(key.slice(7)))
+}
 
 export const CATEGORY_ICON_MAP: Record<CategoryIconKey, LucideIcon> = {
   food: Utensils,
@@ -69,7 +80,7 @@ export const CATEGORY_ICON_MAP: Record<CategoryIconKey, LucideIcon> = {
 }
 
 export function categoryIcon(iconKey: string): LucideIcon {
-  if (iconKey in CATEGORY_ICON_MAP) {
+  if (Object.hasOwn(CATEGORY_ICON_MAP, iconKey)) {
     return CATEGORY_ICON_MAP[iconKey as CategoryIconKey]
   }
   return MoreHorizontal
@@ -80,7 +91,8 @@ export function iconKeyAriaLabel(iconKey: string): string {
   if (!iconKey) {
     return iconKey
   }
-  return iconKey.charAt(0).toUpperCase() + iconKey.slice(1)
+  const name = iconKey.startsWith('lucide:') ? iconKey.slice(7).replaceAll('-', ' ') : iconKey
+  return name.charAt(0).toUpperCase() + name.slice(1)
 }
 
 type CategoryIconViewProps = {
@@ -94,6 +106,17 @@ export function CategoryIconView({
   className,
   style,
 }: CategoryIconViewProps): ReactElement {
+  if (iconKey.startsWith('lucide:') && lucideNameSet.has(iconKey.slice(7))) {
+    const fallback = createElement(MoreHorizontal, { className, style, 'aria-hidden': true })
+    return createElement(Suspense, { fallback }, createElement(LazyDynamicIcon, {
+      key: iconKey,
+      name: iconKey.slice(7) as import('lucide-react/dynamic').IconName,
+      className,
+      style,
+      'aria-hidden': true,
+      fallback: () => fallback,
+    }))
+  }
   return createElement(categoryIcon(iconKey), {
     className,
     style,

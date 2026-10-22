@@ -24,3 +24,12 @@ npm run dev
 ```
 
 Requires a running backend API. Set its URL in `.env`, using `.env.example` as a reference.
+
+Category icons include the original semantic choices and the full Lucide 1.59.0
+catalog (2,159 names including aliases). The picker supports name search and loads
+icons on demand, with a bounded grid and a Show more control. Additional icon keys
+use `lucide:<kebab-case-name>`; deploy the API catalog support before using them.
+
+Signed-in members can change their own password from Settings using their current
+password. Successful changes revoke existing sessions and require sign-in again.
+This does not provide an unauthenticated forgot-password recovery flow.

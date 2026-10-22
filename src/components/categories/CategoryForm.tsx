@@ -1,11 +1,8 @@
 import { useState, type SubmitEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import {
-  CATEGORY_ICON_KEYS,
-  type Category,
-  type CategoryWriteInput,
-} from '@/api/categories'
+import type { Category, CategoryWriteInput } from '@/api/categories'
+import { isCategoryIconKey } from '@/lib/category-icons'
 import { CategoryIconPicker } from '@/components/categories/CategoryIconPicker'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -84,11 +81,7 @@ export function CategoryForm({
       setLocalError(t('categories.form.colorInvalid'))
       return
     }
-    if (
-      !CATEGORY_ICON_KEYS.includes(
-        values.iconKey as (typeof CATEGORY_ICON_KEYS)[number],
-      )
-    ) {
+    if (!isCategoryIconKey(values.iconKey)) {
       setLocalError(t('categories.form.iconInvalid'))
       return
     }

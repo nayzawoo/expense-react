@@ -24,17 +24,24 @@ export function ChangePasswordPage() {
   const navigate = useNavigate()
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
+  const [confirmation, setConfirmation] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   async function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (submitting) return
     if (!currentPassword || !newPassword) {
       setError(t('password.required'))
       return
     }
     if (newPassword.length < 8) {
       setError(t('password.tooShort'))
+      return
+    }
+
+    if (newPassword !== confirmation) {
+      setError(t('password.mismatch'))
       return
     }
 
@@ -101,6 +108,19 @@ export function ChangePasswordPage() {
                 autoComplete="new-password"
                 value={newPassword}
                 onChange={(event) => setNewPassword(event.target.value)}
+                disabled={submitting}
+                required
+                minLength={8}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="confirmPassword">{t('password.confirm')}</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                value={confirmation}
+                onChange={(event) => setConfirmation(event.target.value)}
                 disabled={submitting}
                 required
                 minLength={8}

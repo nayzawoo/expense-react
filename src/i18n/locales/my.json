@@ -364,7 +364,11 @@
       "sortInvalid": "အစဉ်သည် ကိန်းပြည့် ဖြစ်ရမည်။",
       "errorTitle": "သိမ်း၍မရပါ",
       "chooseIcon": "Icon ရွေးရန်",
-      "iconPickerTitle": "Icon ရွေးပါ"
+      "iconPickerTitle": "Icon ရွေးပါ",
+      "searchIcons": "Icon အမည်ဖြင့် ရှာရန်",
+      "noIcons": "ကိုက်ညီသော icon မတွေ့ပါ။",
+      "moreIcons": "နောက်ထပ် icon များ ပြရန်",
+      "iconCount": "Icon {{shown}} / {{total}}"
     },
     "errors": {
       "generic": "Category ကို သိမ်းမရပါ။ ပြန်စမ်းကြည့်ပါ။",
@@ -581,7 +585,9 @@
     "submitting": "Login ဝင်နေပါတယ်…",
     "invalid": "Email ဒါမှမဟုတ် Password မမှန်ပါ။",
     "failed": "Login ဝင်မရပါ။ အင်တာနက်စစ်ပြီး ပြန်စမ်းကြည့်ပါ။",
-    "required": "Email နဲ့ Password ဖြည့်ပါ။"
+    "required": "Email နဲ့ Password ဖြည့်ပါ။",
+    "showPassword": "စကားဝှက် ပြမည်",
+    "hidePassword": "စကားဝှက် ဖျောက်မည်"
   },
   "password": {
     "title": "Password ပြောင်းရန်",
@@ -593,7 +599,10 @@
     "success": "Password ပြောင်းပြီးပါပြီ။ အသစ်နဲ့ Login ပြန်ဝင်ပါ။",
     "failed": "Password ပြောင်းမရပါ။ ပြန်စမ်းကြည့်ပါ။",
     "tooShort": "Password အသစ်မှာ အနည်းဆုံး စာလုံး ၈ လုံး ပါရပါမယ်။",
-    "required": "Password နှစ်ခုလုံး ဖြည့်ပါ။"
+    "required": "Password နှစ်ခုလုံး ဖြည့်ပါ။",
+    "confirm": "စကားဝှက်အသစ် ထပ်ရိုက်ပါ",
+    "mismatch": "စကားဝှက်အသစ် နှစ်ခု မတူပါ။",
+    "selfServiceHint": "မိမိ၏ လက်ရှိစကားဝှက်ဖြင့် စကားဝှက်အသစ် ပြောင်းနိုင်ပါသည်။ ပြောင်းပြီးပါက ပြန်ဝင်ရပါမည်။"
   },
   "charts": {
     "notAvailable": "အချက်အလက် မရှိပါ",

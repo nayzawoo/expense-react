@@ -1,6 +1,6 @@
 import { useState, type SubmitEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogIn } from 'lucide-react'
+import { Eye, EyeOff, LogIn } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { isApiError } from '@/api/errors'
@@ -25,16 +25,17 @@ export function LoginPage() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [info, setInfo] = useState<string | null>(() => {
-    const params = new URLSearchParams(window.location.search)
-    return params.get('passwordChanged') === '1' ? t('password.success') : null
-  })
+  const [showInfo, setShowInfo] = useState(() =>
+    new URLSearchParams(window.location.search).get('passwordChanged') === '1',
+  )
 
   async function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
-    setInfo(null)
+    if (submitting) return
+    setShowInfo(false)
     if (!email.trim() || !password) {
       setError(t('login.required'))
       return
@@ -59,13 +60,10 @@ export function LoginPage() {
   }
 
   return (
-    <section className="mx-auto grid w-full max-w-md gap-4 p-4">
-      <div className="flex items-start justify-between gap-3">
+    <section className="mx-auto flex min-h-svh w-full max-w-md flex-col justify-center gap-5 px-5 py-8 sm:px-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {t('login.title')}
-          </h1>
-          <p className="text-sm text-muted-foreground">{t('login.subtitle')}</p>
+          <p className="text-xl font-semibold tracking-tight">{t('app.name')}</p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center">
           <ThemeSwitcher />
@@ -73,10 +71,10 @@ export function LoginPage() {
         </div>
       </div>
 
-      {info ? (
+      {showInfo ? (
         <Alert>
           <AlertTitle>{t('login.title')}</AlertTitle>
-          <AlertDescription>{info}</AlertDescription>
+          <AlertDescription>{t('password.success')}</AlertDescription>
         </Alert>
       ) : null}
 
@@ -89,11 +87,13 @@ export function LoginPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('login.title')}</CardTitle>
+          <CardTitle>
+            <h1 className="text-2xl leading-relaxed">{t('login.title')}</h1>
+          </CardTitle>
           <CardDescription>{t('login.subtitle')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <form className="grid gap-4" onSubmit={onSubmit}>
+          <form className="grid gap-5" onSubmit={onSubmit} aria-busy={submitting}>
             <div className="grid gap-2">
               <Label htmlFor="email">{t('login.email')}</Label>
               <Input
@@ -101,6 +101,9 @@ export function LoginPage() {
                 type="email"
                 name="email"
                 autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
+                className="h-12 text-base"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 disabled={submitting}
@@ -109,18 +112,33 @@ export function LoginPage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">{t('login.password')}</Label>
-              <Input
-                id="password"
-                type="password"
-                name="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                disabled={submitting}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  className="h-12 pr-12 text-base"
+                  name="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  disabled={submitting}
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1 size-10"
+                  aria-label={t(showPassword ? 'login.hidePassword' : 'login.showPassword')}
+                  aria-pressed={showPassword}
+                  disabled={submitting}
+                  onClick={() => setShowPassword((visible) => !visible)}
+                >
+                  {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+                </Button>
+              </div>
             </div>
-            <Button type="submit" className="w-full" disabled={submitting}>
+            <Button type="submit" className="h-12 w-full text-base" disabled={submitting}>
               <LogIn data-icon="inline-start" />
               {submitting ? t('login.submitting') : t('login.submit')}
             </Button>

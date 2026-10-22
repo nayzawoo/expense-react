@@ -169,7 +169,7 @@ describe('CategoryForm', () => {
     })
   })
 
-  it('saves an end-of-grid icon and restores it when the picker reopens', async () => {
+  it('searches icons, saves a selection and restores it when the picker reopens', async () => {
     const user = userEvent.setup()
     const { onSubmit } = renderCreate()
 
@@ -179,17 +179,11 @@ describe('CategoryForm', () => {
 
     const picker = await screen.findByRole('dialog', { name: 'Choose an icon' })
     await waitFor(() => {
-      expect(within(picker).getByRole('button', { name: 'Other' })).toHaveFocus()
+      expect(within(picker).getByRole('searchbox', { name: 'Search icons by name' })).toHaveFocus()
     })
-    await user.keyboard('{End}')
+    await user.type(within(picker).getByRole('searchbox', { name: 'Search icons by name' }), LAST_ICON_LABEL)
     const lastIcon = within(picker).getByRole('button', { name: LAST_ICON_LABEL })
-    expect(lastIcon).toHaveFocus()
     expect(lastIcon).toHaveAttribute('data-icon-key', LAST_ICON_KEY)
-    await user.keyboard('{ArrowUp}')
-    expect(
-      within(picker).getByRole('button', { name: 'Family' }),
-    ).toHaveFocus()
-    await user.keyboard('{End}')
     await user.click(lastIcon)
 
     await waitFor(() => {
@@ -211,7 +205,7 @@ describe('CategoryForm', () => {
     expect(selected).toHaveAttribute('data-selected', 'true')
     expect(selected).toHaveAttribute('data-icon-key', LAST_ICON_KEY)
     await waitFor(() => {
-      expect(selected).toHaveFocus()
+      expect(within(reopened).getByRole('searchbox', { name: 'Search icons by name' })).toHaveFocus()
     })
     await user.keyboard('{Escape}')
 

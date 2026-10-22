@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
@@ -59,6 +60,18 @@ export function SettingsPage() {
         </CardHeader>
         <CardContent>
           <ThemeSwitcher showLabels />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('password.title')}</CardTitle>
+          <CardDescription>{t('password.selfServiceHint')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button render={<Link to="/change-password" />}>
+            {t('password.title')}
+          </Button>
         </CardContent>
       </Card>
 

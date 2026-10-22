@@ -428,7 +428,11 @@
       "colorInvalid": "Color must be a hex value like #AABBCC.",
       "iconInvalid": "Choose a supported icon key.",
       "sortInvalid": "Sort order must be a whole number.",
-      "errorTitle": "Could not save"
+      "errorTitle": "Could not save",
+      "searchIcons": "Search icons by name",
+      "noIcons": "No matching icons.",
+      "moreIcons": "Show more icons",
+      "iconCount": "{{shown}} of {{total}} icons"
     },
     "errors": {
       "generic": "Something went wrong with this category.",
@@ -645,7 +649,9 @@
     "submitting": "Signing in…",
     "invalid": "Email or password is incorrect.",
     "failed": "Sign-in failed. Check the API connection and try again.",
-    "required": "Enter email and password."
+    "required": "Enter email and password.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "password": {
     "title": "Change password",
@@ -657,7 +663,10 @@
     "success": "Password updated. Sign in again with the new password.",
     "failed": "Could not update the password.",
     "tooShort": "New password must be at least 8 characters.",
-    "required": "Fill in both password fields."
+    "required": "Fill in both password fields.",
+    "confirm": "Confirm new password",
+    "mismatch": "New passwords do not match.",
+    "selfServiceHint": "Use your current password to set a new one. You will sign in again afterwards."
   },
   "charts": {
     "notAvailable": "Not available",
