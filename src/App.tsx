@@ -12,6 +12,7 @@ import { BeneficiariesPage } from '@/pages/BeneficiariesPage'
 import { CategoriesPage } from '@/pages/CategoriesPage'
 import { ChangePasswordPage } from '@/pages/ChangePasswordPage'
 import { ExpensesPage } from '@/pages/ExpensesPage'
+import { IncomesPage } from '@/pages/IncomesPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { MembersPage } from '@/pages/MembersPage'
 import { SettingsPage } from '@/pages/SettingsPage'
@@ -50,6 +51,7 @@ export default function App() {
                   }
                 />
                 <Route path="expenses" element={<ExpensesPage />} />
+                <Route path="incomes" element={<IncomesPage />} />
                 <Route path="transfers" element={<TransfersPage />} />
                 <Route path="accounts" element={<AccountsPage />} />
                 <Route path="categories" element={<CategoriesPage />} />

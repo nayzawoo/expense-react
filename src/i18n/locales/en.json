@@ -6,6 +6,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "expenses": "Expenses",
+    "incomes": "Incomes",
     "transfers": "Transfers",
     "accounts": "Accounts",
     "categories": "Categories",
@@ -139,6 +140,70 @@
       "idempotency": "A conflicting save was detected. Try again.",
       "forbidden": "You do not have permission for this action.",
       "notFound": "That expense was not found."
+    }
+  },
+  "incomes": {
+    "title": "Incomes",
+    "subtitle": "Review and record household income.",
+    "empty": "No posted income yet.",
+    "add": "Add income",
+    "view": "View",
+    "readOnly": "View only",
+    "loadError": "Could not load incomes.",
+    "refreshError": "Income was saved, but the list could not be refreshed.",
+    "detailLoadError": "Could not load that income.",
+    "fields": {
+      "date": "Date",
+      "amount": "Amount",
+      "account": "Account",
+      "beneficiary": "Beneficiary",
+      "note": "Note",
+      "voidReason": "Void reason",
+      "actions": "Actions"
+    },
+    "filters": {
+      "title": "Filters",
+      "hint": "Narrow the posted income list on this device.",
+      "search": "Search",
+      "searchPlaceholder": "Note, account, beneficiary…",
+      "allAccounts": "All accounts",
+      "allBeneficiaries": "All beneficiaries",
+      "from": "From",
+      "to": "To",
+      "none": "No incomes match these filters."
+    },
+    "form": {
+      "createTitle": "Add income",
+      "detailTitle": "Income details",
+      "createHint": "Creates a posted income with an immutable revision.",
+      "detailHint": "Posted income has no replace route. Creator or admin may void.",
+      "create": "Save income",
+      "saving": "Saving…",
+      "void": "Void income",
+      "voiding": "Voiding…",
+      "voidHint": "Voiding keeps history and posts compensation. This cannot be undone here.",
+      "required": "Fill in date, amount, account, and beneficiary.",
+      "voidReasonRequired": "Enter a void reason.",
+      "voidReasonInvalid": "Void reasons cannot contain line breaks.",
+      "noteInvalid": "Notes cannot contain line breaks.",
+      "amountPlaceholder": "e.g. 2500",
+      "notePlaceholder": "Optional note",
+      "noAccounts": "No active accounts",
+      "noBeneficiaries": "No active beneficiaries",
+      "errorTitle": "Could not save"
+    },
+    "errors": {
+      "generic": "Something went wrong with this income.",
+      "invalid": "Check the form values and try again.",
+      "invalidAmount": "Amount must be a whole positive number with no decimals.",
+      "futureDate": "The date cannot be after today for this household.",
+      "dateBeforeOpening": "The date is before the account opening date.",
+      "accountNotActive": "That account is not active.",
+      "beneficiaryNotActive": "That beneficiary is not active.",
+      "versionMismatch": "This income changed elsewhere. Reload and try again.",
+      "idempotency": "A conflicting save was detected. Try again.",
+      "forbidden": "You do not have permission for this action.",
+      "notFound": "That income was not found."
     }
   },
   "transfers": {
