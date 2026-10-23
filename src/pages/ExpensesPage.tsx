@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { Filter, Pencil, PlusCircle, Receipt, Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -15,6 +15,7 @@ import {
 } from '@/api/expenses'
 import type { Account } from '@/api/types'
 import { useAuth } from '@/auth/useAuth'
+import { AccountLabel } from '@/components/accounts/AccountIcon'
 import {
   ExpenseForm,
   type ExpenseFormValues,
@@ -49,6 +50,9 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { expenseErrorKey } from '@/lib/expense-errors'
+import { CategoryIconView } from '@/lib/category-icons'
+import { formatExpenseDate, groupExpensesByDate } from '@/lib/expense-groups'
+import { householdToday } from '@/lib/household-date'
 import { formatMoney } from '@/lib/money'
 import { cn } from '@/lib/utils'
 
@@ -100,11 +104,11 @@ export function ExpensesPage() {
         await Promise.all([
           listExpenses(household.id),
           listAccounts(household.id),
-          listCategories(household.id, 'ACTIVE'),
+          listCategories(household.id, 'ALL'),
           listBeneficiaries(household.id, 'ACTIVE'),
         ])
       setExpenses(rows)
-      setAccounts(accountRows.filter((row) => row.status === 'ACTIVE'))
+      setAccounts(accountRows)
       setCategories(categoryRows)
       setBeneficiaries(beneficiaryRows)
     } catch (err) {
@@ -118,6 +122,15 @@ export function ExpensesPage() {
   useEffect(() => {
     void load()
   }, [load])
+
+  const accountById = useMemo(
+    () => new Map(accounts.map((account) => [account.id, account])),
+    [accounts],
+  )
+  const activeAccounts = useMemo(
+    () => accounts.filter((account) => account.status === 'ACTIVE'),
+    [accounts],
+  )
 
   const filtered = useMemo(() => {
     if (!expenses) {
@@ -143,6 +156,7 @@ export function ExpensesPage() {
       const haystack = [
         expense.note ?? '',
         expense.account.name,
+        accountById.get(expense.account.id)?.ownerLabel ?? '',
         expense.category.name,
         expense.beneficiary.name,
         expense.amount,
@@ -151,7 +165,18 @@ export function ExpensesPage() {
         .toLowerCase()
       return haystack.includes(needle)
     })
-  }, [expenses, query, accountFilter, categoryFilter, fromDate, toDate])
+  }, [expenses, query, accountFilter, categoryFilter, fromDate, toDate, accountById])
+
+  const dateGroups = useMemo(() => groupExpensesByDate(filtered), [filtered])
+  const categoryById = useMemo(
+    () => new Map(categories.map((category) => [category.id, category])),
+    [categories],
+  )
+  const activeCategories = useMemo(
+    () => categories.filter((category) => category.status === 'ACTIVE'),
+    [categories],
+  )
+  const today = householdToday(household?.timezone || 'Asia/Yangon')
 
   function openCreate() {
     setFormMode('create')
@@ -265,7 +290,7 @@ export function ExpensesPage() {
 
   const currency = household?.currency ?? 'MMK'
   const canMutate =
-    accounts.length > 0 && categories.length > 0 && beneficiaries.length > 0
+    activeAccounts.length > 0 && activeCategories.length > 0 && beneficiaries.length > 0
 
   return (
     <section className="grid gap-4">
@@ -328,7 +353,7 @@ export function ExpensesPage() {
               <option value="all">{t('expenses.filters.allAccounts')}</option>
               {accounts.map((account) => (
                 <option key={account.id} value={account.id}>
-                  {account.name}
+                  {account.name} ({account.ownerLabel})
                 </option>
               ))}
             </select>
@@ -390,70 +415,116 @@ export function ExpensesPage() {
           {loading ? (
             <PageLoading />
           ) : filtered.length > 0 ? (
-            <Table>
-              <TableHeader>
+            <Table className="block lg:table">
+              <TableHeader className="hidden lg:table-header-group">
                 <TableRow>
                   <TableHead>{t('expenses.fields.date')}</TableHead>
                   <TableHead>{t('expenses.fields.amount')}</TableHead>
-                  <TableHead className="hidden sm:table-cell">
+                  <TableHead>
                     {t('expenses.fields.account')}
                   </TableHead>
-                  <TableHead className="hidden md:table-cell">
+                  <TableHead>
                     {t('expenses.fields.category')}
                   </TableHead>
-                  <TableHead className="hidden lg:table-cell">
+                  <TableHead>
                     {t('expenses.fields.beneficiary')}
                   </TableHead>
-                  <TableHead className="hidden md:table-cell">
+                  <TableHead>
                     {t('expenses.fields.note')}
                   </TableHead>
+                  <TableHead>{t('expenses.fields.recordedBy')}</TableHead>
                   <TableHead className="w-[1%] text-right">
                     {t('expenses.fields.actions')}
                   </TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
-                {filtered.map((expense) => {
-                  const canOpen =
-                    expense.capabilities.canReplace ||
-                    expense.capabilities.canVoid
-                  return (
-                    <TableRow key={expense.id}>
-                      <TableCell>{expense.effectiveDate}</TableCell>
-                      <TableCell className="font-medium tabular-nums">
-                        {formatMoney(expense.amount, expense.currency)}
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        {expense.account.name}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {expense.category.name}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        {expense.beneficiary.name}
-                      </TableCell>
-                      <TableCell className="hidden max-w-[14rem] truncate md:table-cell">
-                        {expense.note || '—'}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {canOpen ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => openEdit(expense)}
-                          >
-                            <Pencil data-icon="inline-start" />
-                            {t('expenses.edit')}
-                          </Button>
-                        ) : (
-                          <Badge variant="secondary">
-                            {t('expenses.readOnly')}
-                          </Badge>
-                        )}
+              <TableBody className="block [&_tr:last-child]:border lg:table-row-group lg:[&_tr:last-child]:border-0">
+                {dateGroups.map(([date, rows]) => (
+                  <Fragment key={date}>
+                    <TableRow className="block border-0 hover:bg-transparent lg:table-row">
+                      <TableCell colSpan={8} className="block px-0 pt-5 pb-3 whitespace-normal lg:table-cell lg:px-2">
+                        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                            <h3 className="text-base font-semibold tracking-tight">
+                              {date === today ? t('expenses.groups.today') : <time dateTime={date}>{formatExpenseDate(date)}</time>}
+                            </h3>
+                            {date === today ? (
+                              <time dateTime={date} className="text-xs text-muted-foreground">{formatExpenseDate(date)}</time>
+                            ) : null}
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {t('expenses.groups.count', { count: rows.length })}
+                          </span>
+                        </div>
                       </TableCell>
                     </TableRow>
-                  )
-                })}
+                    {rows.map((expense) => {
+                      const account = accountById.get(expense.account.id)
+                      const category = categoryById.get(expense.category.id)
+                      const canOpen =
+                        expense.capabilities.canReplace ||
+                        expense.capabilities.canVoid
+                      return (
+                        <TableRow key={expense.id} className="mb-3 grid grid-cols-2 gap-x-4 gap-y-3 rounded-xl border p-4 hover:bg-muted/20 lg:mb-0 lg:table-row lg:rounded-none lg:border-x-0 lg:border-t-0 lg:p-0">
+                          <TableCell className="hidden text-xs text-muted-foreground lg:table-cell"><time dateTime={expense.effectiveDate}>{expense.effectiveDate}</time></TableCell>
+                          <TableCell className="col-span-2 min-w-0 p-0 text-xl font-semibold break-words whitespace-normal text-rose-700 tabular-nums lg:p-2 lg:text-sm lg:whitespace-nowrap dark:text-rose-400">
+                            <span className="mb-1 block text-xs font-normal text-muted-foreground lg:sr-only">{t('expenses.fields.amount')}</span>
+                            {formatMoney(expense.amount, expense.currency)}
+                          </TableCell>
+                          <TableCell className="min-w-0 p-0 whitespace-normal lg:p-2">
+                            <span className="mb-1 block text-xs text-muted-foreground lg:sr-only">{t('expenses.fields.account')}</span>
+                            <AccountLabel name={expense.account.name} type={account?.type} ownerLabel={account?.ownerLabel} />
+                          </TableCell>
+                          <TableCell className="min-w-0 p-0 whitespace-normal lg:p-2">
+                            <span className="mb-1 block text-xs text-muted-foreground lg:sr-only">{t('expenses.fields.category')}</span>
+                            <span className="inline-flex min-w-0 items-center gap-2">
+                              <span
+                                aria-hidden="true"
+                                className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
+                                style={category ? { backgroundColor: `${category.color}18` } : undefined}
+                              >
+                                <CategoryIconView
+                                  iconKey={category?.iconKey ?? 'other'}
+                                  className="size-4"
+                                  style={category ? { color: category.color } : undefined}
+                                />
+                              </span>
+                              <span className="min-w-0 font-medium break-words">{expense.category.name}</span>
+                            </span>
+                          </TableCell>
+                          <TableCell className="min-w-0 p-0 whitespace-normal lg:p-2">
+                            <span className="mb-1 block text-xs text-muted-foreground lg:sr-only">{t('expenses.fields.beneficiary')}</span>
+                            <span className="inline-block max-w-full rounded-md bg-blue-50 px-2 py-1 text-xs font-medium break-words text-blue-700 dark:bg-blue-400/10 dark:text-blue-300">{expense.beneficiary.name}</span>
+                          </TableCell>
+                          <TableCell className="order-1 col-span-2 min-w-0 p-0 whitespace-normal lg:order-none lg:max-w-64 lg:p-2">
+                            <span className="mb-1 block text-xs text-muted-foreground lg:sr-only">{t('expenses.fields.note')}</span>
+                            <span className="text-sm whitespace-pre-wrap text-muted-foreground [overflow-wrap:anywhere]">{expense.note || '—'}</span>
+                          </TableCell>
+                          <TableCell className="min-w-0 p-0 whitespace-normal lg:p-2">
+                            <span className="mb-1 block text-xs text-muted-foreground lg:sr-only">{t('expenses.fields.recordedBy')}</span>
+                            <span className="text-xs break-words text-muted-foreground">{expense.createdBy.displayName}</span>
+                          </TableCell>
+                          <TableCell className="order-2 col-span-2 border-t pt-3 pr-0 pb-0 pl-0 text-right lg:order-none lg:border-0 lg:p-2">
+                            {canOpen ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openEdit(expense)}
+                              >
+                                <Pencil data-icon="inline-start" />
+                                {t('expenses.edit')}
+                              </Button>
+                            ) : (
+                              <Badge variant="secondary">
+                                {t('expenses.readOnly')}
+                              </Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </Fragment>
+                ))}
               </TableBody>
             </Table>
           ) : (
@@ -494,12 +565,12 @@ export function ExpensesPage() {
             key={
               formMode === 'edit' && selected
                 ? `edit-${selected.id}-${selected.version}`
-                : `create-${accounts.length}-${categories.length}-${beneficiaries.length}`
+                : `create-${activeAccounts.length}-${activeCategories.length}-${beneficiaries.length}`
             }
             mode={formMode}
             expense={selected}
-            accounts={accounts}
-            categories={categories}
+            accounts={activeAccounts}
+            categories={activeCategories}
             beneficiaries={beneficiaries}
             currency={currency}
             timeZone={household?.timezone ?? 'UTC'}

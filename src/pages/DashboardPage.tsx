@@ -14,6 +14,7 @@ import { fetchDashboard } from '@/api/dashboard'
 import { isApiError } from '@/api/errors'
 import type { DashboardActivity, DashboardSnapshot } from '@/api/types'
 import { useAuth } from '@/auth/useAuth'
+import { AccountLabel } from '@/components/accounts/AccountIcon'
 import { CategoryShareChart } from '@/components/charts/CategoryShareChart'
 import { MoneyBarChart } from '@/components/charts/MoneyBarChart'
 import { SpendingPaceChart } from '@/components/charts/SpendingPaceChart'
@@ -341,7 +342,7 @@ export function DashboardPage() {
                   {dashboard.accounts.map((account) => (
                     <TableRow key={account.id}>
                       <TableCell className="font-medium">
-                        {account.name}
+                        <AccountLabel name={account.name} />
                       </TableCell>
                       <TableCell
                         className={cn(

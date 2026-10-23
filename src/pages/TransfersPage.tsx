@@ -12,6 +12,7 @@ import {
 } from '@/api/transfers'
 import type { Account } from '@/api/types'
 import { useAuth } from '@/auth/useAuth'
+import { AccountLabel } from '@/components/accounts/AccountIcon'
 import { PageEmptyState } from '@/components/PageEmptyState'
 import { PageErrorAlert } from '@/components/PageErrorAlert'
 import { PageLoading } from '@/components/PageLoading'
@@ -391,10 +392,10 @@ export function TransfersPage() {
                       {formatMoney(transfer.amount, transfer.currency)}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
-                      {transfer.sourceAccount.name}
+                      <AccountLabel name={transfer.sourceAccount.name} />
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      {transfer.destinationAccount.name}
+                      <AccountLabel name={transfer.destinationAccount.name} />
                     </TableCell>
                     <TableCell className="hidden max-w-[14rem] truncate lg:table-cell">
                       {transfer.note || '—'}

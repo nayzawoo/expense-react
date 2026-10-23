@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import type { Beneficiary } from '@/api/beneficiaries'
 import type { Income } from '@/api/incomes'
 import type { Account } from '@/api/types'
+import { AccountLabel } from '@/components/accounts/AccountIcon'
 import { PageLoading } from '@/components/PageLoading'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -245,7 +246,7 @@ export function IncomeForm({
             <dt className="text-muted-foreground">
               {t('incomes.fields.account')}
             </dt>
-            <dd>{income.account.name}</dd>
+            <dd><AccountLabel name={income.account.name} /></dd>
           </div>
           <div className="grid gap-1">
             <dt className="text-muted-foreground">

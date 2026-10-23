@@ -6,6 +6,7 @@ import {
   type Adjustment,
 } from '@/api/adjustments'
 import type { Account } from '@/api/types'
+import { AccountLabel } from '@/components/accounts/AccountIcon'
 import { PageEmptyState } from '@/components/PageEmptyState'
 import { PageErrorAlert } from '@/components/PageErrorAlert'
 import { PageLoading } from '@/components/PageLoading'
@@ -231,7 +232,7 @@ export function AdjustmentPanel({
           <p className="text-xs text-muted-foreground">
             {t('accounts.adjust.account')}
           </p>
-          <p className="font-medium">{snapshot?.name ?? accountName}</p>
+          <AccountLabel name={snapshot?.name ?? accountName} type={snapshot?.type} className="font-medium" />
         </div>
 
         {snapshotError ? (

@@ -14,6 +14,7 @@ import {
 } from '@/api/incomes'
 import type { Account } from '@/api/types'
 import { useAuth } from '@/auth/useAuth'
+import { AccountLabel } from '@/components/accounts/AccountIcon'
 import {
   IncomeForm,
   type IncomeFormValues,
@@ -557,7 +558,7 @@ export function IncomesPage() {
                       {formatMoney(income.amount, income.currency)}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
-                      {income.account.name}
+                      <AccountLabel name={income.account.name} />
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
                       {income.beneficiary.name}

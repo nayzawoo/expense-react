@@ -2,6 +2,7 @@ import { useState, type SubmitEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { AccountType, CreateAccountInput } from '@/api/accounts'
+import { AccountLabel } from '@/components/accounts/AccountIcon'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -114,6 +115,12 @@ export function AccountForm({
 
   return (
     <form className="grid gap-4" onSubmit={(event) => void handleSubmit(event)}>
+      <AccountLabel
+        name={values.name.trim() || t(`accounts.types.${values.type}`)}
+        type={values.type}
+        size="md"
+        className="font-medium"
+      />
       {displayError ? (
         <Alert variant="destructive">
           <AlertTitle>{t('accounts.form.errorTitle')}</AlertTitle>

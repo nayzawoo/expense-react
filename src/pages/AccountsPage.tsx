@@ -20,6 +20,7 @@ import {
 } from '@/api/adjustments'
 import { isApiError } from '@/api/errors'
 import { useAuth } from '@/auth/useAuth'
+import { AccountIcon } from '@/components/accounts/AccountIcon'
 import {
   AccountForm,
   type AccountFormValues,
@@ -671,9 +672,14 @@ export function AccountsPage() {
                 {visibleAccounts.map((account) => (
                   <TableRow key={account.id}>
                     <TableCell>
-                      <div className="font-medium">{account.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {t('accounts.asOf', { date: account.balanceAsOf })}
+                      <div className="flex items-center gap-3">
+                        <AccountIcon name={account.name} type={account.type} size="md" />
+                        <div>
+                          <div className="font-medium">{account.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {t('accounts.asOf', { date: account.balanceAsOf })}
+                          </div>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>

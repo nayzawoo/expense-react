@@ -83,6 +83,11 @@
     "edit": "Edit",
     "readOnly": "View only",
     "loadError": "Could not load expenses.",
+    "groups": {
+      "today": "Today",
+      "count_one": "{{count}} expense",
+      "count_other": "{{count}} expenses"
+    },
     "fields": {
       "date": "Date",
       "amount": "Amount",
@@ -92,6 +97,7 @@
       "note": "Note",
       "changeReason": "Change reason",
       "voidReason": "Void reason",
+      "recordedBy": "Recorded by",
       "actions": "Actions"
     },
     "filters": {
