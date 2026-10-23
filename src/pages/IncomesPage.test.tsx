@@ -226,8 +226,13 @@ describe('IncomesPage', () => {
     await user.click(screen.getByRole('button', { name: 'Add income' }))
     const dialog = await screen.findByRole('dialog', { name: 'Add income' })
     const account = within(dialog).getByLabelText('Account')
-    expect(account).toHaveTextContent('Cash')
+    expect(account).toHaveTextContent('Cash(Shared)')
     expect(account).not.toHaveTextContent('Wallet')
+    await user.click(account)
+    expect(
+      await screen.findByRole('option', { name: 'Cash(Shared)' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: 'Wallet(Shared)' })).toBeNull()
   })
 
   it('voids with the fresh detail version and keeps that version on retry', async () => {

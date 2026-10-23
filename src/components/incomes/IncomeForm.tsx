@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import type { Beneficiary } from '@/api/beneficiaries'
 import type { Income } from '@/api/incomes'
 import type { Account } from '@/api/types'
-import { AccountLabel } from '@/components/accounts/AccountIcon'
+import { AccountSelect } from '@/components/accounts/AccountSelect'
 import { PageLoading } from '@/components/PageLoading'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -21,6 +21,7 @@ import {
 } from '@/lib/income-errors'
 import { formatMoney } from '@/lib/money'
 import { cn } from '@/lib/utils'
+import { AccountLabel } from '../accounts/AccountIcon'
 
 const selectClassName = cn(
   'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base outline-none transition-colors',
@@ -338,24 +339,14 @@ export function IncomeForm({
 
       <div className="grid gap-2">
         <Label htmlFor="income-account">{t('incomes.fields.account')}</Label>
-        <select
+        <AccountSelect
           id="income-account"
-          className={selectClassName}
+          accounts={accounts}
           value={values.accountId}
-          onChange={(event) => update('accountId', event.target.value)}
+          onValueChange={(accountId) => update('accountId', accountId)}
           disabled={fieldsBusy || accounts.length === 0}
-          required
-        >
-          {accounts.length === 0 ? (
-            <option value="">{t('incomes.form.noAccounts')}</option>
-          ) : (
-            accounts.map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.name}
-              </option>
-            ))
-          )}
-        </select>
+          emptyLabel={t('incomes.form.noAccounts')}
+        />
       </div>
 
       <div className="grid gap-2">
