@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import type { Account } from '@/api/types'
 import type { Transfer } from '@/api/transfers'
+import { AccountSelect } from '@/components/accounts/AccountSelect'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,13 +12,6 @@ import { Label } from '@/components/ui/label'
 import { isPositiveMoneyString } from '@/lib/expense-errors'
 import { householdToday } from '@/lib/household-date'
 import { formatMoney } from '@/lib/money'
-import { cn } from '@/lib/utils'
-
-const selectClassName = cn(
-  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base outline-none transition-colors',
-  'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50',
-  'disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 md:text-sm',
-)
 
 export type TransferFormValues = {
   effectiveDate: string
@@ -263,50 +257,30 @@ export function TransferForm({
         <Label htmlFor="transfer-source">
           {t('transfers.fields.sourceAccount')}
         </Label>
-        <select
+        <AccountSelect
           id="transfer-source"
-          className={selectClassName}
+          accounts={canCreate ? accounts : []}
           value={values.sourceAccountId}
-          onChange={(event) => update('sourceAccountId', event.target.value)}
+          onValueChange={(accountId) => update('sourceAccountId', accountId)}
           disabled={busy || !canCreate}
-          required
-        >
-          {!canCreate ? (
-            <option value="">{t('transfers.form.needTwoAccounts')}</option>
-          ) : (
-            accounts.map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.name}
-              </option>
-            ))
-          )}
-        </select>
+          emptyLabel={t('transfers.form.needTwoAccounts')}
+        />
       </div>
 
       <div className="grid gap-2">
         <Label htmlFor="transfer-destination">
           {t('transfers.fields.destinationAccount')}
         </Label>
-        <select
+        <AccountSelect
           id="transfer-destination"
-          className={selectClassName}
+          accounts={canCreate ? accounts : []}
           value={values.destinationAccountId}
-          onChange={(event) =>
-            update('destinationAccountId', event.target.value)
+          onValueChange={(accountId) =>
+            update('destinationAccountId', accountId)
           }
           disabled={busy || !canCreate}
-          required
-        >
-          {!canCreate ? (
-            <option value="">{t('transfers.form.needTwoAccounts')}</option>
-          ) : (
-            accounts.map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.name}
-              </option>
-            ))
-          )}
-        </select>
+          emptyLabel={t('transfers.form.needTwoAccounts')}
+        />
       </div>
 
       <div className="grid gap-2">

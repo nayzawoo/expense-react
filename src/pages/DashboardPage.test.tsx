@@ -295,8 +295,15 @@ describe('DashboardPage', () => {
       )
     })
     expect(listExpensesMock).not.toHaveBeenCalled()
-    expect(await within(dialog).findByRole('option', { name: 'Cash' })).toBeInTheDocument()
-    expect(within(dialog).queryByRole('option', { name: 'Old cash' })).toBeNull()
+    const accountSelect = await within(dialog).findByRole('combobox', {
+      name: 'Account',
+    })
+    expect(accountSelect).toHaveTextContent('Cash(Shared)')
+    await user.click(accountSelect)
+    expect(
+      await screen.findByRole('option', { name: 'Cash(Shared)' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: 'Old cash(Shared)' })).toBeNull()
     expect(within(dialog).queryByRole('option', { name: 'Transport' })).toBeNull()
 
     await user.click(within(dialog).getByRole('button', { name: 'Cancel' }))
@@ -477,17 +484,22 @@ describe('DashboardPage', () => {
     })
 
     const reopened = await openCreate(user)
+    const freshAccount = await within(reopened).findByRole('combobox', {
+      name: 'Account',
+    })
+    expect(freshAccount).toHaveTextContent('Fresh Cash(Shared)')
+    await user.click(freshAccount)
     expect(
-      await within(reopened).findByRole('option', { name: 'Fresh Cash' }),
+      await screen.findByRole('option', { name: 'Fresh Cash(Shared)' }),
     ).toBeInTheDocument()
 
     await act(async () => {
       resolveFirst(sampleAccounts)
       await firstAccounts
     })
-    expect(within(reopened).queryByRole('option', { name: 'Wallet' })).toBeNull()
+    expect(screen.queryByRole('option', { name: 'Wallet(Shared)' })).toBeNull()
     expect(
-      within(reopened).getByRole('option', { name: 'Fresh Cash' }),
+      screen.getByRole('option', { name: 'Fresh Cash(Shared)' }),
     ).toBeInTheDocument()
 
     await user.click(within(reopened).getByRole('button', { name: 'Cancel' }))
@@ -521,15 +533,20 @@ describe('DashboardPage', () => {
       </>,
     )
 
+    const otherAccount = await screen.findByRole('combobox', { name: 'Account' })
+    expect(otherAccount).toHaveTextContent('Other Cash(Shared)')
+    await user.click(otherAccount)
     expect(
-      await screen.findByRole('option', { name: 'Other Cash' }),
+      await screen.findByRole('option', { name: 'Other Cash(Shared)' }),
     ).toBeInTheDocument()
     await act(async () => {
       resolveStaleHousehold(sampleAccounts)
       await staleHouseholdAccounts
     })
-    expect(screen.queryByRole('option', { name: 'Wallet' })).toBeNull()
-    expect(screen.getByRole('option', { name: 'Other Cash' })).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: 'Wallet(Shared)' })).toBeNull()
+    expect(
+      screen.getByRole('option', { name: 'Other Cash(Shared)' }),
+    ).toBeInTheDocument()
     expect(listAccountsMock).toHaveBeenCalledWith(otherHousehold.id)
     expect(listExpensesMock).not.toHaveBeenCalled()
     expect(screen.getByTestId('pathname')).toHaveTextContent('/')

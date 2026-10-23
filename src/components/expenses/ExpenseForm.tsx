@@ -5,6 +5,7 @@ import type { Account } from '@/api/types'
 import type { Beneficiary } from '@/api/beneficiaries'
 import type { Category } from '@/api/categories'
 import type { Expense } from '@/api/expenses'
+import { AccountSelect } from '@/components/accounts/AccountSelect'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -199,24 +200,14 @@ export function ExpenseForm({
 
       <div className="grid gap-2">
         <Label htmlFor="expense-account">{t('expenses.fields.account')}</Label>
-        <select
+        <AccountSelect
           id="expense-account"
-          className={selectClassName}
+          accounts={accounts}
           value={values.accountId}
-          onChange={(event) => update('accountId', event.target.value)}
+          onValueChange={(accountId) => update('accountId', accountId)}
           disabled={busy || accounts.length === 0}
-          required
-        >
-          {accounts.length === 0 ? (
-            <option value="">{t('expenses.form.noAccounts')}</option>
-          ) : (
-            accounts.map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.name}
-              </option>
-            ))
-          )}
-        </select>
+          emptyLabel={t('expenses.form.noAccounts')}
+        />
       </div>
 
       <div className="grid gap-2">
