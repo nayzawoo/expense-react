@@ -47,14 +47,21 @@ describe('AccountSelect', () => {
 
     const trigger = screen.getByRole('combobox')
     expect(trigger).toHaveTextContent('KBZ(NZO)')
-    expect(trigger.querySelector('svg')).not.toBeNull()
+    expect(trigger.querySelector('img')?.getAttribute('src')).toContain(
+      'images/accounts/kbz.png',
+    )
+    expect(trigger.className).toContain('data-[size=default]:h-9')
 
     await user.click(trigger)
 
     const kbzOption = await screen.findByRole('option', { name: 'KBZ(NZO)' })
-    expect(kbzOption.querySelector('svg')).not.toBeNull()
+    expect(kbzOption.querySelector('img')?.getAttribute('src')).toContain(
+      'images/accounts/kbz.png',
+    )
     const otherKpay = screen.getByRole('option', { name: 'Kpay(MH)' })
-    expect(otherKpay.querySelector('svg')).not.toBeNull()
+    expect(otherKpay.querySelector('img')?.getAttribute('src')).toContain(
+      'images/accounts/kpay.png',
+    )
     expect(screen.getByRole('option', { name: 'Kpay(NZO)' })).toBeInTheDocument()
 
     await user.click(otherKpay)
@@ -92,11 +99,15 @@ describe('AccountSelect', () => {
 
     const trigger = screen.getByRole('combobox')
     expect(trigger).toHaveTextContent('Kpay(NZO)')
-    expect(trigger.querySelector('svg')).not.toBeNull()
+    expect(trigger.querySelector('img')?.getAttribute('src')).toContain(
+      'images/accounts/kpay.png',
+    )
 
     await user.click(trigger)
     const option = await screen.findByRole('option', { name: 'Kpay(NZO)' })
-    expect(option.querySelector('svg')).not.toBeNull()
+    expect(option.querySelector('img')?.getAttribute('src')).toContain(
+      'images/accounts/kpay.png',
+    )
     expect(screen.getAllByRole('option')).toHaveLength(1)
   })
 })

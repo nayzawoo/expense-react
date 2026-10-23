@@ -1,6 +1,5 @@
-import { Banknote, Landmark, Wallet, type LucideIcon } from 'lucide-react'
-
-import type { Account, AccountType } from '@/api/types'
+import type { Account } from '@/api/types'
+import { AccountIcon } from '@/components/accounts/AccountIcon'
 import {
   Select,
   SelectContent,
@@ -9,12 +8,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { accountSelectLabel } from '@/lib/account-label'
-
-const accountTypeIcons: Record<AccountType, LucideIcon> = {
-  BANK: Landmark,
-  WALLET: Wallet,
-  CASH: Banknote,
-}
 
 type AccountSelectProps = {
   id: string
@@ -26,10 +19,9 @@ type AccountSelectProps = {
 }
 
 function AccountOption({ account }: { account: Account }) {
-  const Icon = accountTypeIcons[account.type] ?? Wallet
   return (
-    <span className="flex min-w-0 items-center gap-1.5">
-      <Icon className="size-4 shrink-0" aria-hidden />
+    <span className="flex min-w-0 items-center gap-2">
+      <AccountIcon name={account.name} type={account.type} size="sm" />
       <span className="truncate">{accountSelectLabel(account)}</span>
     </span>
   )
@@ -62,7 +54,7 @@ export function AccountSelect({
       }}
       disabled={disabled || accounts.length === 0}
     >
-      <SelectTrigger id={id} className="w-full">
+      <SelectTrigger id={id} className="w-full data-[size=default]:h-9">
         <SelectValue placeholder={emptyLabel} />
       </SelectTrigger>
       <SelectContent>
